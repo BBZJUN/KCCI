@@ -3,6 +3,8 @@
 import { useSyncExternalStore } from "react";
 import type { CalendarItem } from "./calendar";
 import type { NoticeChange } from "./notice";
+import type { PostingExtraction } from "./schemas";
+import { DEFAULT_PROFILE, type Profile } from "./recommend";
 import { DEMO_ITEMS, DEMO_TODAY } from "./demo";
 
 /**
@@ -10,10 +12,12 @@ import { DEMO_ITEMS, DEMO_TODAY } from "./demo";
  * TODO(P0): Supabase 키가 준비되면 applications/stages/personal_events 테이블로 교체.
  * 인터페이스(useCalendar, addItems, updateItem, resetDemo)는 그대로 두고 구현만 바꾼다.
  */
-type State = { items: CalendarItem[]; today: string | null };
+/** draft: 추천에서 수락한 공고 → 화면 ②에서 확인 후 캘린더에 추가 */
+export type Draft = { postingId: string; text: string; extraction: PostingExtraction; color: string };
+type State = { items: CalendarItem[]; today: string | null; profile: Profile; dismissed: string[]; draft: Draft | null };
 
 const KEY = "jobdori:calendar:v1";
-const EMPTY: State = { items: [], today: null };
+const EMPTY: State = { items: [], today: null, profile: DEFAULT_PROFILE, dismissed: [], draft: null };
 const listeners = new Set<() => void>();
 let cache: { raw: string | null; state: State } = { raw: null, state: EMPTY };
 
@@ -28,7 +32,7 @@ function read(): State {
   if (raw === cache.raw) return cache.state;
   let state: State = EMPTY;
   try {
-    state = raw ? (JSON.parse(raw) as State) : EMPTY;
+    state = raw ? { ...EMPTY, ...(JSON.parse(raw) as Partial<State>) } : EMPTY;
   } catch {
     state = EMPTY;
   }
@@ -84,9 +88,29 @@ export function applyNoticeChanges(changes: NoticeChange[]) {
 }
 
 export function resetDemo() {
-  write({ items: DEMO_ITEMS, today: DEMO_TODAY });
+  const cur = read();
+  write({ ...EMPTY, profile: cur.profile, items: DEMO_ITEMS, today: DEMO_TODAY });
+}
+
+export function setProfile(profile: Profile) {
+  write({ ...read(), profile });
+}
+
+export function dismissPosting(id: string) {
+  const cur = read();
+  write({ ...cur, dismissed: [...cur.dismissed, id] });
+}
+
+export function setDraft(draft: Draft | null) {
+  write({ ...read(), draft });
 }
 
 export function clearAll() {
-  write(EMPTY);
+  write({ ...EMPTY, profile: read().profile });
+}
+
+/** 오늘 날짜 (클라이언트에서만). 서버 렌더·하이드레이션 중에는 "" → 하이드레이션 불일치와 Next 16 프리렌더 오류를 피한다 */
+const noop = () => () => {};
+export function useClientToday(): string {
+  return useSyncExternalStore(noop, () => new Date().toISOString().slice(0, 10), () => "");
 }
