@@ -11,7 +11,7 @@
 ## 실행
 ```bash
 cd web
-cp .env.example .env.local   # OPENAI_API_KEY, 모델명, Supabase 키 입력
+cp .env.example .env.local   # 무료 Gemini 키(aistudio.google.com)와 모델명 입력
 npm install
 npm run dev                  # http://localhost:3000
 npm test

@@ -28,13 +28,16 @@ P1: 같은 기업의 지난 공고 이력이 쌓이면 그 간격을 우선 적�
 4. 파싱 실패 시 '직접 수정' 폼으로 전환
 5. LLM 입력 전 `maskPII` (이름·전화·이메일)
 
-## Structured Outputs 주의
-- OpenAI `responses.parse` + `zodTextFormat` 사용 (openai v7, zod v4)
+## LLM 공급자 · Structured Outputs
+- `llm.ts`의 `structured()`: OpenAI 호환 Chat Completions `chat.completions.parse` + `zodResponseFormat` (openai v7, zod v4)
+- 공급자는 `LLM_BASE_URL`로 선택: **Gemini 무료 등급(기본 권장)** `https://generativelanguage.googleapis.com/v1beta/openai/` · Groq `https://api.groq.com/openai/v1` · OpenAI(비움)
+- 공급자가 json_schema를 거부(400/422)하면 JSON 모드 + 스키마 프롬프트로 재요청하고 zod로 검증 (mock 서버로 두 경로 확인함)
 - strict 모드: 모든 필드 required, 선택값은 `.nullable()`로. `.optional()` 금지.
+- 무료 등급 한도가 작으므로 SDK `maxRetries: 4`로 429 재시도
 
 ## 모델 라우팅 · 비용
-- 추출(2, 4): `OPENAI_MODEL_EXTRACT` (경량)
-- 추천 이유·조정 문구(1, 5의 제안): `OPENAI_MODEL_REASON` (상위)
+- 추출(2, 4): `LLM_MODEL_EXTRACT` (경량, 예: Gemini Flash 계열)
+- 추천 이유·조정 문구(1, 5의 제안): `LLM_MODEL_REASON` (비우면 EXTRACT 모델 사용)
 - 공유 캐시: 공고 원문을 정규화 → sha256 → `posting_cache` 조회 후 없을 때만 호출
 - 호출 시점: 공고 수락, 안내 업로드 때만 (상시 폴링 없음)
 

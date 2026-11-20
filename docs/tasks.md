@@ -6,7 +6,8 @@
 ## 11/20(금) — 뼈대
 - [x] Next.js 16 + 스키마 + 도구 2·3·4·5 골격, 단위 테스트 8개, API 3개
 - [x] Supabase 스키마(RLS), 크롬 확장 골격, 평가셋 양식
-- [ ] (강재준) `.env.local` 세팅, `npm run eval`로 p01 통과 확인
+- [ ] (강재준) Gemini 무료 키 발급(aistudio.google.com) → `.env.local` 세팅, `npm run eval`로 p01 통과 확인
+- [ ] 소개서 수정 필요: 04 기술 스택·별첨·AI 활용내역의 'OpenAI Responses API' → 실제 사용 공급자(Gemini API, OpenAI 호환)
 - [ ] (강재준) Supabase 프로젝트 생성 → `supabase/migrations/0001_init.sql` 적용
 
 ## 11/21(토) — P0 기능

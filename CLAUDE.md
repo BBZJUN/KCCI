@@ -15,7 +15,7 @@
 ```
 web/                Next.js 16 (App Router) + TypeScript + Tailwind v4 — 웹 캘린더와 Agent API
   src/lib/schemas.ts        zod 스키마 (LLM 출력 = Structured Outputs, optional 대신 nullable)
-  src/lib/agent/            parsePosting · estimateSchedule · readNotice · detectConflict · evidence
+  src/lib/agent/            llm(structured) · parsePosting · estimateSchedule · readNotice · detectConflict · evidence · pii
   src/app/api/              postings/parse · notices/read · conflicts (Route Handlers)
   scripts/eval.ts           평가셋 정확도 측정
 extension/          크롬 확장 MV3 (빌드 없는 JS) — 공고 페이지에서 '캘린더에 담기'
@@ -41,7 +41,8 @@ npm run eval                 # 전형 추출 정확도 → eval/results/
 - 충돌 판단은 코드(`detectConflict`)로만 한다. LLM은 조정 문구 제안에만 쓴다.
 - 같은 공고는 `posting_cache`로 1회만 분석한다.
 - 민간 플랫폼은 크롤링하지 않는다. 사용자가 연 페이지를 확장으로 읽는 방식만 허용.
-- 모델명은 하드코딩하지 않고 `OPENAI_MODEL_EXTRACT` / `OPENAI_MODEL_REASON` 환경변수로 받는다.
+- LLM 호출은 `src/lib/agent/llm.ts`의 `structured()` 하나로만 한다 (OpenAI 호환 Chat Completions → Gemini 무료 등급·Groq·OpenAI 공용). 공급자·모델명은 `LLM_BASE_URL` / `LLM_MODEL_EXTRACT` / `LLM_MODEL_REASON` 환경변수로 받고 하드코딩하지 않는다.
+- 무료 등급은 분당 요청 수가 작다. 반복 호출(eval 등)은 순차 실행하고 429는 재시도에 맡긴다.
 - 데모 데이터는 전부 가상. 실제 기업명을 쓰면 '시연용 가상' 표시를 유지한다.
 - 순수 로직(추정·충돌·파싱 보조)을 바꾸면 `agent.test.ts`에 테스트를 추가하고 `npm test`를 통과시킨다.
 - UI 문구는 한국어, 디자인 토큰은 `globals.css`의 `@theme` (navy #1F2A44, accent #F26B3A).

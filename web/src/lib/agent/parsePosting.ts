@@ -1,6 +1,5 @@
-import { zodTextFormat } from "openai/helpers/zod";
 import { PostingExtraction } from "../schemas";
-import { getOpenAI, model } from "./openai";
+import { structured } from "./llm";
 import { estimateSchedule } from "./estimateSchedule";
 
 const SYSTEM = `너는 한국 채용 공고에서 전형 일정을 구조화하는 도구다.
@@ -13,15 +12,12 @@ const SYSTEM = `너는 한국 채용 공고에서 전형 일정을 구조화하�
 - 공고에 없는 단계를 추측해서 추가하지 않는다.`;
 
 export async function parsePosting(text: string, today: string) {
-  const res = await getOpenAI().responses.parse({
-    model: model("extract"),
-    input: [
-      { role: "system", content: SYSTEM },
-      { role: "user", content: `today=${today}\n\n[공고 원문]\n${text}` },
-    ],
-    text: { format: zodTextFormat(PostingExtraction, "posting_extraction") },
+  const extraction = await structured({
+    kind: "extract",
+    system: SYSTEM,
+    user: `today=${today}\n\n[공고 원문]\n${text}`,
+    schema: PostingExtraction,
+    name: "posting_extraction",
   });
-  const extraction = res.output_parsed;
-  if (!extraction) throw new Error("공고 구조화 결과가 비어 있습니다");
   return { extraction, plan: estimateSchedule(extraction.stages, text) };
 }
