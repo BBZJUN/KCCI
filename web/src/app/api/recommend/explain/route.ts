@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { zodTextFormat } from "openai/helpers/zod";
-import { getOpenAI, model } from "@/lib/agent/openai";
+import { structured } from "@/lib/agent/llm";
 
 const Body = z.object({
   posting: z.object({ company: z.string(), title: z.string(), jobTags: z.array(z.string()), region: z.string(), preferredCerts: z.array(z.string()), stageSummary: z.string() }),
@@ -14,15 +13,14 @@ export async function POST(request: Request) {
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "잘못된 요청" }, { status: 400 });
   try {
-    const res = await getOpenAI().responses.parse({
-      model: model("reason"),
-      input: [
-        { role: "system", content: "너는 취업 준비생에게 공고 추천 이유를 짧게 설명한다. 주어진 규칙 근거(ruleReasons)와 공고·프로필 정보에 있는 사실만 사용하고, 없는 사실을 지어내지 않는다. 한국어, 각 25자 이내, 최대 3개." },
-        { role: "user", content: JSON.stringify(parsed.data) },
-      ],
-      text: { format: zodTextFormat(Out, "recommend_reasons") },
+    const out = await structured({
+      kind: "reason",
+      system: "너는 취업 준비생에게 공고 추천 이유를 짧게 설명한다. 주어진 규칙 근거(ruleReasons)와 공고·프로필 정보에 있는 사실만 사용하고, 없는 사실을 지어내지 않는다. 한국어, 각 25자 이내, 최대 3개.",
+      user: JSON.stringify(parsed.data),
+      schema: Out,
+      name: "recommend_reasons",
     });
-    return Response.json(res.output_parsed ?? { reasons: [] });
+    return Response.json(out);
   } catch (e) {
     return Response.json({ error: (e as Error).message }, { status: 502 });
   }

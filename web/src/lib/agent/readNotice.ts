@@ -1,6 +1,5 @@
-import { zodTextFormat } from "openai/helpers/zod";
 import { NoticeReading } from "../schemas";
-import { getOpenAI, model } from "./openai";
+import { structured } from "./llm";
 import { evidenceInSource } from "./evidence";
 import { maskPII } from "./pii";
 
@@ -14,15 +13,12 @@ const SYSTEM = `너는 채용 결과·일정 안내 메일/문자를 판독하�
 
 export async function readNotice(text: string, today: string) {
   const masked = maskPII(text);
-  const res = await getOpenAI().responses.parse({
-    model: model("extract"),
-    input: [
-      { role: "system", content: SYSTEM },
-      { role: "user", content: `today=${today}\n\n[안내 원문]\n${masked}` },
-    ],
-    text: { format: zodTextFormat(NoticeReading, "notice_reading") },
+  const reading = await structured({
+    kind: "extract",
+    system: SYSTEM,
+    user: `today=${today}\n\n[안내 원문]\n${masked}`,
+    schema: NoticeReading,
+    name: "notice_reading",
   });
-  const reading = res.output_parsed;
-  if (!reading) throw new Error("안내 판독 결과가 비어 있습니다");
   return { reading, evidence_missing: !evidenceInSource(reading.evidence, masked) };
 }
