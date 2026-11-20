@@ -1,5 +1,49 @@
 import type { CalendarItem } from "./calendar";
-import type { PostingExtraction } from "./schemas";
+import type { NoticeReading, PostingExtraction } from "./schemas";
+
+/** API 키 없이 화면 ③을 볼 때 쓰는 예시 안내 (가상) */
+export const SAMPLE_NOTICES: { label: string; text: string; reading: NoticeReading }[] = [
+  {
+    label: "토스뱅크 서류 합격",
+    text: `[토스뱅크] 서류전형 합격 안내 (시연용 가상 메일)
+
+안녕하세요, 김민지님.
+토스뱅크 2026 하반기 신입 채용에 지원해 주셔서 감사합니다.
+서류전형에 합격하셨습니다. 1차 면접은 12월 18일(금) 오후 2시, 화상으로 진행됩니다.
+문의: recruit@example.com`,
+    reading: {
+      company: "토스뱅크",
+      result: "pass",
+      about_stage: "서류전형",
+      next_stage: { stage_name: "1차 면접", stage_type: "interview_1", date: "2026-12-18", time: "14:00", mode: "화상" },
+      evidence: "서류전형에 합격하셨습니다. 1차 면접은 12월 18일(금) 오후 2시, 화상으로 진행됩니다.",
+    },
+  },
+  {
+    label: "SK하이닉스 면접 일정",
+    text: `[SK하이닉스] 면접 일정 안내 (시연용 가상 문자)
+[이름]님, SKCT 합격을 축하드립니다. 면접은 12월 22일(화) 오전 10시 이천캠퍼스에서 진행됩니다.`,
+    reading: {
+      company: "SK하이닉스",
+      result: "pass",
+      about_stage: "SKCT",
+      next_stage: { stage_name: "면접", stage_type: "interview_1", date: "2026-12-22", time: "10:00", mode: "이천캠퍼스" },
+      evidence: "면접은 12월 22일(화) 오전 10시 이천캠퍼스에서 진행됩니다.",
+    },
+  },
+  {
+    label: "신한은행 서류 불합격",
+    text: `[신한은행] 서류전형 결과 안내 (시연용 가상 메일)
+아쉽게도 이번 서류전형에서는 귀하를 모시지 못하게 되었습니다. 지원해 주셔서 감사합니다.`,
+    reading: {
+      company: "신한은행",
+      result: "fail",
+      about_stage: "서류전형",
+      next_stage: null,
+      evidence: "아쉽게도 이번 서류전형에서는 귀하를 모시지 못하게 되었습니다.",
+    },
+  },
+];
 
 /** API 키 없이 화면 흐름을 볼 때 쓰는 예시 추출 결과 (eval/postings/p01.txt 정답과 동일) */
 export const SAMPLE_EXTRACTION: PostingExtraction = {

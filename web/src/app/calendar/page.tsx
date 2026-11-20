@@ -18,6 +18,7 @@ export default function CalendarPage() {
         </div>
         <nav className="ml-auto flex gap-2 text-sm">
           <Link href="/" className="rounded-lg bg-navy px-3 py-2 font-semibold text-white">+ 공고 담기</Link>
+          <Link href="/notices" className="rounded-lg bg-accent px-3 py-2 font-semibold text-white">안내 반영</Link>
           <button onClick={resetDemo} className="rounded-lg border border-slate-300 px-3 py-2 font-semibold">시연 데이터 불러오기</button>
           {items.length > 0 && <button onClick={clearAll} className="rounded-lg px-3 py-2 text-muted">비우기</button>}
         </nav>

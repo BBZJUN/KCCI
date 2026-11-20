@@ -11,6 +11,7 @@ export type CalendarItem = {
   category: CalendarEvent["category"];
   start: string; // YYYY-MM-DD
   end: string;
+  time?: string | null; // HH:MM (안내로 확정된 경우)
   confidence: Confidence;
   evidence: string;
   status: "planned" | "confirmed" | "done" | "cancelled";
@@ -46,6 +47,7 @@ export function applicationToItems(app: Application): CalendarItem[] {
       category: "application" as const,
       start: s.start!,
       end: s.end ?? s.start!,
+      time: s.time,
       confidence: s.confidence,
       evidence: s.evidence,
       status: s.confidence === "high" ? ("confirmed" as const) : ("planned" as const),

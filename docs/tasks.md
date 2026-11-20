@@ -15,7 +15,7 @@
 - [ ] (강재준) 저장소 교체: 지금은 `src/lib/store.ts`(localStorage) → Supabase 키 준비되면 같은 함수 시그니처로 교체
 - [ ] (강재준) `POST /api/applications` (수락→applications+stages 저장), `GET /api/calendar`
 - [ ] (강재준) `posting_cache` 공유 캐시 적용
-- [ ] (강재준) 화면 ③ 안내 반영 API: `confirmStage`로 점선→실선, 불합격 시 이후 단계 cancelled (승인 후)
+- [x] (강재준) 화면 ③ `/notices` 안내 반영: 판독 → 변경 제안(점선→실선 / 새 일정 / 불합격 시 이후 일정 정리) → 승인 시 적용. 예시 안내 3종으로 키 없이 시연 가능
 - [ ] (이영은) 가상 공고 30건 + 정답, 안내 메일 20건 + 정답 작성
 - [ ] (이영은) 개인·자격증 일정 추가 UI, Q-net 시험일정 연동(가능하면)
 

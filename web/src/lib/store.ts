@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import type { CalendarItem } from "./calendar";
+import type { NoticeChange } from "./notice";
 import { DEMO_ITEMS, DEMO_TODAY } from "./demo";
 
 /**
@@ -68,6 +69,18 @@ export function addItems(items: CalendarItem[]) {
 export function updateItem(id: string, patch: Partial<CalendarItem>) {
   const cur = read();
   write({ ...cur, items: cur.items.map((i) => (i.id === id ? { ...i, ...patch } : i)) });
+}
+
+/** 사용자가 승인한 안내 반영 제안을 한 번에 적용 */
+export function applyNoticeChanges(changes: NoticeChange[]) {
+  const cur = read();
+  let items = cur.items;
+  for (const c of changes) {
+    if (c.type === "confirm") items = items.map((i) => (i.id === c.itemId ? c.after : i));
+    else if (c.type === "add") items = [...items.filter((i) => i.id !== c.after.id), c.after];
+    else items = items.map((i) => (i.id === c.itemId ? { ...i, status: "cancelled" } : i));
+  }
+  write({ ...cur, items });
 }
 
 export function resetDemo() {
