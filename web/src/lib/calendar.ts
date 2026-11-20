@@ -25,6 +25,9 @@ export type Application = {
   stages: PlannedStage[];
 };
 
+/** 개인·자격증 일정 색 (회사 색과 겹치지 않게 회색·하늘색) */
+export const PERSONAL_COLORS = { certificate: "#0EA5E9", personal: "#8A94A6" } as const;
+
 export const COMPANY_COLORS = ["#2A9D8F", "#7B61FF", "#E09F3E", "#1E63B5", "#D6457A", "#16A34A", "#0EA5E9"];
 
 /** 회사명 → 칩용 약칭 */

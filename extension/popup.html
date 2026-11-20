@@ -3,23 +3,35 @@
 <head>
   <meta charset="utf-8" />
   <style>
-    body { width: 320px; margin: 0; font-family: system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #1f2a44; }
-    header { background: #1f2a44; color: #fff; padding: 12px 14px; font-weight: 700; }
+    body { width: 330px; margin: 0; font-family: system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #1f2a44; }
+    header { background: #1f2a44; color: #fff; padding: 12px 14px; font-weight: 700; display: flex; align-items: center; }
+    header a { margin-left: auto; color: #cfd6e4; font-size: 12px; font-weight: 400; cursor: pointer; text-decoration: underline; }
     main { padding: 12px 14px; }
     button { width: 100%; padding: 10px; border: 0; border-radius: 8px; background: #f26b3a; color: #fff; font-weight: 700; cursor: pointer; }
+    button.secondary { background: #1f2a44; margin-top: 10px; }
     button:disabled { opacity: .6; }
     ul { padding-left: 0; list-style: none; margin: 12px 0 0; }
     li { border-left: 3px solid #2a9d8f; padding: 2px 0 2px 8px; margin-bottom: 8px; font-size: 13px; }
     li.mid { border-left-style: dashed; } li.low { border-left-style: dotted; }
     small { color: #5b6478; }
     .err { color: #e5484d; font-size: 12px; margin-top: 8px; }
+    .note { color: #5b6478; font-size: 11px; margin-top: 8px; }
+    #settings { display: none; background: #f4f6fa; padding: 10px 14px; font-size: 12px; }
+    #settings input { width: 100%; box-sizing: border-box; padding: 6px; margin: 4px 0 6px; border: 1px solid #c9d0dc; border-radius: 6px; }
+    #settings button { padding: 6px; font-size: 12px; }
   </style>
 </head>
 <body>
-  <header>잡도리 · 캘린더에 담기</header>
+  <header>잡도리 · 캘린더에 담기 <a id="toggle">설정</a></header>
+  <section id="settings">
+    잡도리 웹 주소
+    <input id="api" placeholder="http://localhost:3000" />
+    <button id="saveApi">저장</button>
+  </section>
   <main>
     <button id="grab">이 공고의 전형 일정 가져오기</button>
     <div id="out"></div>
+    <p class="note">지금 열어 둔 페이지의 글만 읽어요. 일정은 웹 캘린더에서 확인한 뒤에만 담겨요.</p>
   </main>
   <script src="popup.js"></script>
 </body>

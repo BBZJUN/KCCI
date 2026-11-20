@@ -12,8 +12,8 @@ import { DEMO_ITEMS, DEMO_TODAY } from "./demo";
  * TODO(P0): Supabase 키가 준비되면 applications/stages/personal_events 테이블로 교체.
  * 인터페이스(useCalendar, addItems, updateItem, resetDemo)는 그대로 두고 구현만 바꾼다.
  */
-/** draft: 추천에서 수락한 공고 → 화면 ②에서 확인 후 캘린더에 추가 */
-export type Draft = { postingId: string; text: string; extraction: PostingExtraction; color: string };
+/** draft: 추천에서 수락했거나 확장에서 가져온 공고 → 화면 ②에서 확인 후 캘린더에 추가 */
+export type Draft = { postingId: string; text: string; extraction: PostingExtraction; color: string; source?: "recommend" | "extension"; sourceUrl?: string };
 type State = { items: CalendarItem[]; today: string | null; profile: Profile; dismissed: string[]; draft: Draft | null };
 
 const KEY = "jobdori:calendar:v1";
@@ -73,6 +73,11 @@ export function addItems(items: CalendarItem[]) {
 export function updateItem(id: string, patch: Partial<CalendarItem>) {
   const cur = read();
   write({ ...cur, items: cur.items.map((i) => (i.id === id ? { ...i, ...patch } : i)) });
+}
+
+export function removeItem(id: string) {
+  const cur = read();
+  write({ ...cur, items: cur.items.filter((i) => i.id !== id) });
 }
 
 /** 사용자가 승인한 안내 반영 제안을 한 번에 적용 */

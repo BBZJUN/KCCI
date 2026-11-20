@@ -61,3 +61,42 @@ describe("guards", () => {
     expect(m).not.toMatch(/010-1234-5678|hr@example\.com|강재준/);
   });
 });
+
+import { memoryCache, normalizePosting, postingHash } from "./cache";
+
+describe("posting_cache 해시", () => {
+  it("공백·줄바꿈·전각 공백 차이는 같은 공고로 본다", () => {
+    const a = "  접수기간: 11.20~12.2\r\n\r\n면접　추후 안내 ";
+    const b = "접수기간: 11.20~12.2\n면접 추후 안내";
+    expect(normalizePosting(a)).toBe(normalizePosting(b));
+    expect(postingHash(a)).toBe(postingHash(b));
+  });
+  it("글자가 다르면 다른 공고로 본다", () => {
+    expect(postingHash("접수기간: 11.20~12.2")).not.toBe(postingHash("접수기간: 11.20~12.3"));
+  });
+  it("메모리 캐시는 저장한 결과를 그대로 돌려준다", async () => {
+    const c = memoryCache();
+    const h = postingHash(SRC);
+    expect(await c.get(h)).toBeNull();
+    await c.set(h, { extraction: { company: "가상", title: "t", stages }, model: "m", createdAt: "2026-11-20" });
+    expect((await c.get(h))?.extraction.stages).toHaveLength(4);
+  });
+});
+
+import { pickTarget, templateAdvice } from "./conflictAdvice";
+
+describe("충돌 조정 대상 (코드 규칙)", () => {
+  const ev = (id: string, category: CalendarEvent["category"], confidence: CalendarEvent["confidence"], start = "2026-12-17"): CalendarEvent => ({ id, title: `${id} 1차 면접`, category, start, end: start, confidence });
+  it("추정 일정 쪽을 조정 대상으로 고른다", () => {
+    expect(pickTarget({ a: ev("현대", "application", "high"), b: ev("신한", "application", "low") }).target.id).toBe("신한");
+  });
+  it("신뢰도가 같으면 개인 일정을 옮긴다", () => {
+    expect(pickTarget({ a: ev("알바", "personal", "high"), b: ev("토스", "application", "high") }).target.id).toBe("알바");
+  });
+  it("템플릿 문구는 다른 기업명을 드러내지 않는다", () => {
+    const adv = templateAdvice({ a: ev("현대차", "application", "high"), b: ev("신한", "application", "low"), overlapStart: "2026-12-17" });
+    expect(adv.target_id).toBe("신한");
+    expect(adv.message).not.toContain("현대차");
+    expect(adv.message).toContain("12월 17일");
+  });
+});

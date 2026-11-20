@@ -1,4 +1,4 @@
-import type { CalendarItem } from "./calendar";
+import { PERSONAL_COLORS, type CalendarItem } from "./calendar";
 import type { NoticeReading, PostingExtraction } from "./schemas";
 
 /** API 키 없이 화면 ③을 볼 때 쓰는 예시 안내 (가상) */
@@ -63,7 +63,7 @@ export const SAMPLE_EXTRACTION: PostingExtraction = {
  */
 export const DEMO_TODAY = "2026-12-07";
 
-const C = { shinhan: "#2A9D8F", toss: "#7B61FF", hyundai: "#E09F3E", samsung: "#1E63B5", hynix: "#D6457A", cert: "#0EA5E9", personal: "#8A94A6" };
+const C = { shinhan: "#2A9D8F", toss: "#7B61FF", hyundai: "#E09F3E", samsung: "#1E63B5", hynix: "#D6457A", cert: PERSONAL_COLORS.certificate, personal: PERSONAL_COLORS.personal };
 
 type Seed = [id: string, group: string, label: string, company: string | null, color: string, cat: CalendarItem["category"], start: string, end: string, conf: CalendarItem["confidence"], evidence: string, status?: CalendarItem["status"]];
 

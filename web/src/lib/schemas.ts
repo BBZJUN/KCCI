@@ -85,3 +85,11 @@ export type CalendarEvent = {
   end: string; // YYYY-MM-DD (inclusive)
   confidence: Confidence; // personal/certificate는 high
 };
+
+/** 충돌 조정 제안 (LLM은 문구만 쓴다. 충돌 여부·대상 후보는 코드가 정한다) */
+export const ConflictAdvice = z.object({
+  target_id: z.string().describe("옮기거나 문의할 일정의 id (입력으로 준 두 id 중 하나)"),
+  reason: z.string().describe("그 일정을 고른 이유 한 문장"),
+  message: z.string().describe("기업 채용담당자에게 보낼 일정 조정 문의 문구, 또는 개인 일정 이동 메모. 4~6문장, 정중한 존댓말"),
+});
+export type ConflictAdvice = z.infer<typeof ConflictAdvice>;

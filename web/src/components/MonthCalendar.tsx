@@ -10,6 +10,7 @@ import {
   itemsOn,
   monthGrid,
 } from "@/lib/calendar";
+import ConflictAdviceButton from "./ConflictAdviceButton";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 const MAX_CHIPS = 3;
@@ -30,9 +31,10 @@ type Props = {
   today: string;
   onConfirm?: (id: string) => void;
   onCancel?: (id: string) => void;
+  onRemove?: (id: string) => void;
 };
 
-export default function MonthCalendar({ items, today, onConfirm, onCancel }: Props) {
+export default function MonthCalendar({ items, today, onConfirm, onCancel, onRemove }: Props) {
   const [ym, setYm] = useState(() => ({ y: Number(today.slice(0, 4)), m: Number(today.slice(5, 7)) }));
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -126,6 +128,7 @@ export default function MonthCalendar({ items, today, onConfirm, onCancel }: Pro
                 <span className="ml-1 text-muted">
                   {c.severity === "hard" ? "· 두 일정 모두 확정이라 한쪽 조정이 필요해요" : "· 추정 일정이 확정되면 바로 조정 문의를 준비하세요"}
                 </span>
+                <ConflictAdviceButton conflict={c} />
               </li>
             ))}
           </ul>
@@ -153,6 +156,11 @@ export default function MonthCalendar({ items, today, onConfirm, onCancel }: Pro
             {sel.category === "application" && sel.status !== "cancelled" && sel.status !== "done" && onCancel && (
               <button onClick={() => onCancel(sel.id)} className="w-full rounded-lg border border-slate-300 py-2 font-semibold">
                 이 일정 정리하기
+              </button>
+            )}
+            {sel.category !== "application" && onRemove && (
+              <button onClick={() => { onRemove(sel.id); setSelected(null); }} className="w-full rounded-lg border border-slate-300 py-2 font-semibold">
+                이 일정 삭제
               </button>
             )}
             <p className="text-xs text-muted">AI는 제안만 하고, 확정·정리는 직접 누를 때만 반영돼요.</p>

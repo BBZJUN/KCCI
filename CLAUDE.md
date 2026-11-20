@@ -15,9 +15,10 @@
 ```
 web/                Next.js 16 (App Router) + TypeScript + Tailwind v4 — 웹 캘린더와 Agent API
   src/lib/schemas.ts        zod 스키마 (LLM 출력 = Structured Outputs, optional 대신 nullable)
-  src/lib/agent/            llm(structured) · parsePosting · estimateSchedule · readNotice · detectConflict · evidence · pii
-  src/app/api/              postings/parse · notices/read · conflicts (Route Handlers)
-  scripts/eval.ts           평가셋 정확도 측정
+  src/lib/agent/            llm(structured) · parsePosting · cache · estimateSchedule · readNotice · detectConflict · conflictAdvice · evidence · pii
+  src/lib/remote.ts         Supabase 행 ↔ CalendarItem (서버 API용)
+  src/app/api/              postings/parse · notices/read · conflicts(/suggest) · recommend/explain · applications · calendar
+  scripts/eval.ts           평가셋 정확도 측정 (gen-eval.ts: 평가셋 생성)
 extension/          크롬 확장 MV3 (빌드 없는 JS) — 공고 페이지에서 '캘린더에 담기'
 supabase/migrations/ DB 스키마 + RLS
 eval/               가상 공고·안내 메일·충돌 시나리오 평가셋
