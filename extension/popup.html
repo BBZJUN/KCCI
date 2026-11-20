@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body { width: 320px; margin: 0; font-family: system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #1f2a44; }
+    header { background: #1f2a44; color: #fff; padding: 12px 14px; font-weight: 700; }
+    main { padding: 12px 14px; }
+    button { width: 100%; padding: 10px; border: 0; border-radius: 8px; background: #f26b3a; color: #fff; font-weight: 700; cursor: pointer; }
+    button:disabled { opacity: .6; }
+    ul { padding-left: 0; list-style: none; margin: 12px 0 0; }
+    li { border-left: 3px solid #2a9d8f; padding: 2px 0 2px 8px; margin-bottom: 8px; font-size: 13px; }
+    li.mid { border-left-style: dashed; } li.low { border-left-style: dotted; }
+    small { color: #5b6478; }
+    .err { color: #e5484d; font-size: 12px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <header>잡도리 · 캘린더에 담기</header>
+  <main>
+    <button id="grab">이 공고의 전형 일정 가져오기</button>
+    <div id="out"></div>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+/* 소개서 디자인 토큰 */
+@theme {
+  --color-navy: #1f2a44;
+  --color-head: #3d5a80;
+  --color-panel: #eef1f6;
+  --color-tint: #fdede6;
+  --color-accent: #f26b3a;
+  --color-muted: #5b6478;
+  --font-sans: "Pretendard", "Noto Sans KR", system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif;
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-navy);
+}
