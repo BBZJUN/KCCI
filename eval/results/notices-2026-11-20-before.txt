@@ -1,0 +1,4 @@
+# eval 2026-11-20 · model=gemini-3.5-flash-lite
+
+안내 판독 정확도: 19/20 = 95.0% (결과 판정만 20/20)
+n13 expected {"result":"schedule_only","next":{"stage_type":"ai_assessment","date":"2026-12-09","time":"10:00"}} got {"result":"schedule_only","next":{"stage_type":"ai_assessment","date":"2026-12-10","time":"18:00"}}
