@@ -1,5 +1,6 @@
 import { PostingExtraction } from "../schemas";
-import { structured } from "./llm";
+import { model, structured } from "./llm";
+import { getPostingCache, postingHash } from "./cache";
 import { estimateSchedule } from "./estimateSchedule";
 
 const SYSTEM = `너는 한국 채용 공고에서 전형 일정을 구조화하는 도구다.
@@ -11,7 +12,14 @@ const SYSTEM = `너는 한국 채용 공고에서 전형 일정을 구조화하�
 - evidence에는 근거가 된 원문 문장을 한 글자도 바꾸지 말고 그대로 복사한다. 원문에 없는 내용을 지어내지 않는다.
 - 공고에 없는 단계를 추측해서 추가하지 않는다.`;
 
-export async function parsePosting(text: string, today: string) {
+/** opts.cache=false: 평가(eval)처럼 매번 모델 성능을 재야 할 때 공유 캐시를 건너뛴다 */
+export async function parsePosting(text: string, today: string, sourceUrl?: string, opts: { cache?: boolean } = {}) {
+  const useCache = opts.cache !== false;
+  const cache = getPostingCache();
+  const hash = postingHash(text);
+  const hit = useCache ? await cache.get(hash) : null;
+  if (hit) return { extraction: hit.extraction, plan: estimateSchedule(hit.extraction.stages, text), cached: true, hash };
+
   const extraction = await structured({
     kind: "extract",
     system: SYSTEM,
@@ -19,5 +27,6 @@ export async function parsePosting(text: string, today: string) {
     schema: PostingExtraction,
     name: "posting_extraction",
   });
-  return { extraction, plan: estimateSchedule(extraction.stages, text) };
+  if (useCache) await cache.set(hash, { extraction, model: model("extract"), createdAt: new Date().toISOString() }, sourceUrl);
+  return { extraction, plan: estimateSchedule(extraction.stages, text), cached: false, hash };
 }

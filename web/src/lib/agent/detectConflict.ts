@@ -35,8 +35,10 @@ export function detectConflicts(events: CalendarEvent[], occupying: (e: Calendar
   return out;
 }
 
-const OCCUPYING = /면접|시험|GSAT|SKCT|코딩|필기|인적성|알바|아르바이트|모임|약속/;
+const OCCUPYING = /면접|인터뷰|시험|NCS|직업기초|GSAT|SKCT|코딩|필기|인적성|알바|아르바이트|모임|약속/;
+const NOT_OCCUPYING = /발표|결과|마감|접수/;
 export function defaultOccupying(e: CalendarEvent): boolean {
   if (e.category !== "application") return true;
-  return OCCUPYING.test(e.title);
+  // '필기 합격자 발표', '면접 결과'처럼 발표·마감은 하루를 쓰지 않는다
+  return OCCUPYING.test(e.title) && !NOT_OCCUPYING.test(e.title);
 }

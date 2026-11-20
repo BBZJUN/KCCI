@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import MonthCalendar from "@/components/MonthCalendar";
-import { clearAll, resetDemo, updateItem, useCalendar } from "@/lib/store";
+import AddEventForm from "@/components/AddEventForm";
+import { addItems, clearAll, removeItem, resetDemo, updateItem, useCalendar, useClientToday } from "@/lib/store";
 
 export default function CalendarPage() {
   const { items, today } = useCalendar();
+  const clientToday = useClientToday();
   // 프리렌더 시점(빈 상태)에는 날짜를 만들지 않는다 — Next 16은 프리렌더 중 new Date()를 오류로 본다
   const base = today ?? (items.length > 0 ? new Date().toISOString().slice(0, 10) : "");
 
@@ -30,7 +32,13 @@ export default function CalendarPage() {
         </p>
       )}
 
-      <div className="mt-5">
+      {(today || clientToday) && (
+        <div className="mt-4">
+          <AddEventForm key={today ?? clientToday} defaultDate={today ?? clientToday} onAdd={(it) => addItems([it])} />
+        </div>
+      )}
+
+      <div className="mt-4">
         {items.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center">
             <p className="font-semibold">아직 담은 공고가 없어요.</p>
@@ -43,6 +51,7 @@ export default function CalendarPage() {
             today={base}
             onConfirm={(id) => updateItem(id, { confidence: "high", status: "confirmed" })}
             onCancel={(id) => updateItem(id, { status: "cancelled" })}
+            onRemove={removeItem}
           />
         )}
       </div>

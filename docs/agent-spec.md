@@ -1,14 +1,18 @@
 # 에이전트 스펙
 
-에이전트는 도구 5개를 순서대로 호출한다. 각 도구는 `web/src/lib/agent/`의 함수 하나에 대응한다.
+에이전트는 도구 5개(+조정 문구 보조 1개)를 순서대로 호출한다. 각 도구는 `web/src/lib/agent/`의 함수 하나에 대응한다.
 
 | # | 도구 | 구현 | AI/코드 | 입력 | 출력 | 상태 |
 |---|---|---|---|---|---|---|
-| 1 | `search_jobs` · `rank_jobs` | `recommend.ts` (TODO) | AI | 관심 직무·지역, 내 일정, 잡알리오 공고 목록 | 추천 공고 + 이유 3개 | P1 |
-| 2 | `parse_posting` | `parsePosting.ts` | AI | 공고 원문, today | `PostingExtraction` | ✅ 골격 |
+| 1 | `search_jobs` · `rank_jobs` | `src/lib/recommend.ts` + `/api/recommend/explain` | 규칙 점수 + AI 이유 | 관심 직무·지역, 내 일정, 공고 목록 | 추천 공고 + 이유 | ✅ (가상 공고) |
+| 2 | `parse_posting` | `parsePosting.ts` + `cache.ts` | AI | 공고 원문, today | `PostingExtraction` | ✅ + 공유 캐시 |
 | 3 | `estimate_schedule` | `estimateSchedule.ts` | 규칙 | 추출 단계 | `PlannedStage[]` (신뢰도·basis) | ✅ + 테스트 |
-| 4 | `read_notice` | `readNotice.ts` | AI | 메일·문자 원문(마스킹) | `NoticeReading` | ✅ 골격 |
-| 5 | `detect_conflict` | `detectConflict.ts` | 코드 | 캘린더 이벤트 | `Conflict[]` (hard/soft) | ✅ + 테스트 |
+| 4 | `read_notice` | `readNotice.ts` | AI | 메일·문자 원문(마스킹) | `NoticeReading` | ✅ |
+| 5 | `detect_conflict` | `detectConflict.ts` | 코드 | 캘린더 이벤트 | `Conflict[]` (hard/soft) | ✅ + 시나리오 10건 |
+| 5′ | `suggest_adjustment` | `conflictAdvice.ts` + `/api/conflicts/suggest` | 대상=코드, 문구=AI | 겹친 두 일정 | `ConflictAdvice` (대상·이유·문구) | ✅ 키 없으면 기본 문구 |
+
+조정 대상 규칙: 추정 일정 → 개인 일정 → 늦게 시작하는 일정 순. 문구에 다른 기업명이 들어가면 기본 문구로 대체.
+하루를 점유하는 일정만 충돌 대상: 면접·인터뷰·시험·필기·NCS·코딩·인적성·GSAT·SKCT·개인·자격증. '발표·결과·마감·접수'는 제외.
 
 ## 신뢰도 → UI
 | kind | 의미 | confidence | 선 |
@@ -38,7 +42,7 @@ P1: 같은 기업의 지난 공고 이력이 쌓이면 그 간격을 우선 적�
 ## 모델 라우팅 · 비용
 - 추출(2, 4): `LLM_MODEL_EXTRACT` (경량, 예: Gemini Flash 계열)
 - 추천 이유·조정 문구(1, 5의 제안): `LLM_MODEL_REASON` (비우면 EXTRACT 모델 사용)
-- 공유 캐시: 공고 원문을 정규화 → sha256 → `posting_cache` 조회 후 없을 때만 호출
+- 공유 캐시: 공고 원문을 정규화(공백·줄바꿈만) → sha256 → `posting_cache` 조회 후 없을 때만 호출. Supabase 서비스 키가 없으면 서버 메모리 캐시. eval은 캐시를 건너뜀
 - 호출 시점: 공고 수락, 안내 업로드 때만 (상시 폴링 없음)
 
 ## 공공데이터

@@ -7,13 +7,13 @@ const Body = z.object({
   sourceUrl: z.string().url().optional(),
 });
 
-// TODO(P0): posting_cache(원문 해시) 조회 → 있으면 재사용, 없으면 분석 후 저장 (docs/agent-spec.md '공유 캐시')
+// posting_cache(원문 해시)에 있으면 LLM 호출 없이 재사용 (src/lib/agent/cache.ts)
 export async function POST(request: Request) {
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: parsed.error.issues[0]?.message ?? "잘못된 요청" }, { status: 400 });
-  const { text, today = new Date().toISOString().slice(0, 10) } = parsed.data;
+  const { text, sourceUrl, today = new Date().toISOString().slice(0, 10) } = parsed.data;
   try {
-    return Response.json(await parsePosting(text, today));
+    return Response.json(await parsePosting(text, today, sourceUrl));
   } catch (e) {
     return Response.json({ error: (e as Error).message }, { status: 502 });
   }

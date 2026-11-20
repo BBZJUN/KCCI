@@ -1,0 +1,59 @@
+{
+  "_note": "충돌 시나리오 10건 (가상). expected = 감지돼야 하는 충돌 [id, id, severity]. 빈 배열이면 충돌이 없어야 한다(오탐 확인).",
+  "scenarios": [
+    { "id": "c01", "desc": "확정 면접 vs 추정 면접 같은 날 (시연 시나리오)",
+      "events": [
+        { "id": "h1", "title": "현대차 1차 면접", "category": "application", "start": "2026-12-17", "end": "2026-12-17", "confidence": "high" },
+        { "id": "s4", "title": "신한 1차 면접", "category": "application", "start": "2026-12-15", "end": "2026-12-20", "confidence": "low" }
+      ], "expected": [["h1", "s4", "soft"]] },
+    { "id": "c02", "desc": "확정 면접 2건 같은 날",
+      "events": [
+        { "id": "a", "title": "토스 1차 면접", "category": "application", "start": "2026-12-18", "end": "2026-12-18", "confidence": "high" },
+        { "id": "b", "title": "카카오뱅크 1차 인터뷰", "category": "application", "start": "2026-12-18", "end": "2026-12-18", "confidence": "high" }
+      ], "expected": [["a", "b", "hard"]] },
+    { "id": "c03", "desc": "면접 vs 자격증 시험",
+      "events": [
+        { "id": "a", "title": "SK하이닉스 1차 면접", "category": "application", "start": "2026-12-05", "end": "2026-12-05", "confidence": "high" },
+        { "id": "c", "title": "정보처리기사 실기", "category": "certificate", "start": "2026-12-05", "end": "2026-12-05", "confidence": "high" }
+      ], "expected": [["a", "c", "hard"]] },
+    { "id": "c04", "desc": "면접 vs 아르바이트",
+      "events": [
+        { "id": "a", "title": "현대차 1차 면접", "category": "application", "start": "2026-12-10", "end": "2026-12-10", "confidence": "high" },
+        { "id": "p", "title": "아르바이트", "category": "personal", "start": "2026-12-10", "end": "2026-12-10", "confidence": "high" }
+      ], "expected": [["a", "p", "hard"]] },
+    { "id": "c05", "desc": "필기시험 vs 범위 추정 면접 (기간 겹침)",
+      "events": [
+        { "id": "w", "title": "KB 필기전형", "category": "application", "start": "2026-12-20", "end": "2026-12-20", "confidence": "high" },
+        { "id": "i", "title": "토스 1차 기술 면접", "category": "application", "start": "2026-12-21", "end": "2026-12-31", "confidence": "mid" },
+        { "id": "g", "title": "LG CNS 1차 면접", "category": "application", "start": "2026-12-19", "end": "2026-12-23", "confidence": "low" }
+      ], "expected": [["g", "w", "soft"], ["g", "i", "soft"]] },
+    { "id": "c06", "desc": "AI역량검사(기간형)는 면접과 겹쳐도 충돌 아님",
+      "events": [
+        { "id": "ai", "title": "신한 AI역량검사", "category": "application", "start": "2026-12-07", "end": "2026-12-08", "confidence": "high" },
+        { "id": "i", "title": "삼성 면접", "category": "application", "start": "2026-12-08", "end": "2026-12-08", "confidence": "high" }
+      ], "expected": [] },
+    { "id": "c07", "desc": "서류 마감·필기 발표일은 면접과 같은 날이어도 충돌 아님",
+      "events": [
+        { "id": "d", "title": "네이버 서류 마감", "category": "application", "start": "2026-12-03", "end": "2026-12-03", "confidence": "high" },
+        { "id": "r", "title": "쿠팡 서류 발표", "category": "application", "start": "2026-12-03", "end": "2026-12-03", "confidence": "high" },
+        { "id": "t", "title": "가상전력 필기 합격자 발표", "category": "application", "start": "2026-12-03", "end": "2026-12-03", "confidence": "high" },
+        { "id": "i", "title": "카카오뱅크 1차 인터뷰", "category": "application", "start": "2026-12-03", "end": "2026-12-03", "confidence": "high" }
+      ], "expected": [] },
+    { "id": "c08", "desc": "하루 차이는 충돌 아님",
+      "events": [
+        { "id": "a", "title": "토스 2차 면접", "category": "application", "start": "2026-12-30", "end": "2026-12-30", "confidence": "high" },
+        { "id": "b", "title": "가족 모임", "category": "personal", "start": "2026-12-31", "end": "2026-12-31", "confidence": "high" }
+      ], "expected": [] },
+    { "id": "c09", "desc": "GSAT 이틀 vs 개인 약속",
+      "events": [
+        { "id": "g", "title": "삼성 GSAT", "category": "application", "start": "2026-12-12", "end": "2026-12-13", "confidence": "high" },
+        { "id": "p", "title": "친구 약속", "category": "personal", "start": "2026-12-13", "end": "2026-12-13", "confidence": "high" }
+      ], "expected": [["g", "p", "hard"]] },
+    { "id": "c10", "desc": "세 일정이 하루에 몰림",
+      "events": [
+        { "id": "a", "title": "하나 실무진 면접", "category": "application", "start": "2027-01-06", "end": "2027-01-06", "confidence": "high" },
+        { "id": "b", "title": "한국가상전력공사 직무면접", "category": "application", "start": "2027-01-06", "end": "2027-01-06", "confidence": "high" },
+        { "id": "c", "title": "SQLD 시험", "category": "certificate", "start": "2027-01-06", "end": "2027-01-06", "confidence": "high" }
+      ], "expected": [["a", "b", "hard"], ["a", "c", "hard"], ["b", "c", "hard"]] }
+  ]
+}

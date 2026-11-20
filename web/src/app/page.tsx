@@ -103,7 +103,11 @@ export default function Home() {
 
         <section className="rounded-xl border border-dashed border-slate-300 p-4">
           <h2 className="font-semibold">{result ? `${result.extraction.company} · ${result.extraction.title}` : "추출 결과"}</h2>
-          {fromCache && <p className="mt-1 text-xs font-semibold text-teal-700">추천에서 수락한 공고 · 공유 캐시의 분석 결과를 불러왔어요 (AI 재호출 없음)</p>}
+          {fromCache && (
+            <p className="mt-1 text-xs font-semibold text-teal-700">
+              {draft?.source === "extension" ? "확장에서 가져온 공고 · 확인 후 캘린더에 추가하세요" : "추천에서 수락한 공고 · 공유 캐시의 분석 결과를 불러왔어요 (AI 재호출 없음)"}
+            </p>
+          )}
           <ul className="mt-3 space-y-3">
             {result?.plan.map((s, i) => (
               <li key={i} className={`border-l-4 border-teal-600 pl-3 ${LINE[s.confidence]}`}>
