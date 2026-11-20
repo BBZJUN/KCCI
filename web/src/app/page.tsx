@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { PlannedStage, PostingExtraction } from "@/lib/schemas";
+import { estimateSchedule } from "@/lib/agent/estimateSchedule";
+import { applicationToItems, COMPANY_COLORS } from "@/lib/calendar";
+import { SAMPLE_EXTRACTION } from "@/lib/demo";
+import { addItems, useCalendar } from "@/lib/store";
 
 const SAMPLE = `[신한은행] 2026 하반기 신입행원 채용 (디지털/ICT) — 시연용 가상 공고
 접수기간: 11.20(금)~12.2(수) 17:00
@@ -18,6 +24,8 @@ const LINE: Record<PlannedStage["confidence"], string> = {
 const LABEL: Record<PlannedStage["confidence"], string> = { high: "확정", mid: "범위", low: "추정" };
 
 export default function Home() {
+  const router = useRouter();
+  const { items } = useCalendar();
   const [text, setText] = useState(SAMPLE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,9 +46,33 @@ export default function Home() {
     }
   }
 
+  function preview() {
+    setError(null);
+    setResult({ extraction: SAMPLE_EXTRACTION, plan: estimateSchedule(SAMPLE_EXTRACTION.stages, SAMPLE) });
+  }
+
+  function addToCalendar() {
+    if (!result) return;
+    const groups = new Set(items.map((i) => i.groupId));
+    const app = {
+      id: `app-${Date.now()}`,
+      company: result.extraction.company,
+      title: result.extraction.title,
+      color: COMPANY_COLORS[groups.size % COMPANY_COLORS.length],
+      stages: result.plan,
+    };
+    addItems(applicationToItems(app));
+    router.push("/calendar");
+  }
+
+  const datedCount = result?.plan.filter((s) => s.start).length ?? 0;
+
   return (
     <main className="mx-auto w-full max-w-5xl px-6 py-10">
-      <p className="text-sm font-semibold text-accent">잡도리 · 프로토타입</p>
+      <div className="flex items-center">
+        <p className="text-sm font-semibold text-accent">잡도리 · 프로토타입</p>
+        <Link href="/calendar" className="ml-auto rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold">내 캘린더 →</Link>
+      </div>
       <h1 className="mt-1 text-3xl font-bold">전형 일정 확인 · 원문 근거</h1>
       <p className="mt-2 text-muted">공고 원문을 붙여 넣으면 에이전트가 전형 단계를 추출하고, 미정 일정은 신뢰도별 선으로 추정합니다.</p>
 
@@ -51,7 +83,12 @@ export default function Home() {
           <button onClick={run} disabled={loading} className="mt-3 w-full rounded-lg bg-accent py-2.5 font-semibold text-white disabled:opacity-60">
             {loading ? "추출 중…" : "수락하고 전형 일정 만들기"}
           </button>
-          {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+          {error && (
+            <div className="mt-2 text-sm text-red-600">
+              {error}
+              <button onClick={preview} className="ml-2 underline">예시 결과로 화면 보기</button>
+            </div>
+          )}
         </section>
 
         <section className="rounded-xl border border-dashed border-slate-300 p-4">
@@ -75,6 +112,14 @@ export default function Home() {
             ))}
             {!result && <li className="text-sm text-muted">왼쪽에서 공고를 넣고 버튼을 누르세요.</li>}
           </ul>
+          {result && (
+            <div className="mt-4 flex gap-2">
+              <button onClick={addToCalendar} disabled={datedCount === 0} className="flex-1 rounded-lg bg-accent py-2.5 font-semibold text-white disabled:opacity-60">
+                {datedCount}개 일정 캘린더에 추가
+              </button>
+              <button onClick={() => setResult(null)} className="rounded-lg border border-slate-300 px-4 font-semibold">다시</button>
+            </div>
+          )}
         </section>
       </div>
     </main>
