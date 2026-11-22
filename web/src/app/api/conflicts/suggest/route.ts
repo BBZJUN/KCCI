@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ConflictAdvice } from "@/lib/schemas";
-import { structured } from "@/lib/agent/llm";
+import { llmConfigured, structured, WEB_BUDGET } from "@/lib/agent/llm";
+import { allowLLM } from "@/lib/rateLimit";
 import { pickTarget, templateAdvice } from "@/lib/agent/conflictAdvice";
 
 const Event = z.object({
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
   const fallback = templateAdvice(c);
   const { target, keep } = pickTarget(c);
   const keepName = keep.title.split(" ")[0];
+  if (!llmConfigured() || !allowLLM(request)) return Response.json({ ...fallback, source: "template" });
   try {
     const ai = await structured({
       kind: "reason",
@@ -35,6 +37,7 @@ export async function POST(request: Request) {
       user: JSON.stringify({ overlap_date: c.overlapStart, events: [c.a, c.b], suggested_target: target.id }),
       schema: ConflictAdvice,
       name: "conflict_advice",
+      budget: WEB_BUDGET,
     });
     // 다른 기업명이 새어 나가면 템플릿으로 대체 (가드)
     if (keep.category === "application" && keepName.length >= 2 && ai.message.includes(keepName)) return Response.json({ ...fallback, source: "template", note: "guard" });

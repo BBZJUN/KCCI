@@ -6,15 +6,10 @@ import { useRouter } from "next/navigation";
 import type { PlannedStage, PostingExtraction } from "@/lib/schemas";
 import { estimateSchedule } from "@/lib/agent/estimateSchedule";
 import { applicationToItems, COMPANY_COLORS } from "@/lib/calendar";
-import { SAMPLE_EXTRACTION } from "@/lib/demo";
+import { SAMPLE_EXTRACTION, SAMPLE_POSTING_TEXT } from "@/lib/demo";
 import { addItems, setDraft, useCalendar } from "@/lib/store";
 
-const SAMPLE = `[신한은행] 2026 하반기 신입행원 채용 (디지털/ICT) — 시연용 가상 공고
-접수기간: 11.20(금)~12.2(수) 17:00
-AI역량검사: 12.7~12.8 (온라인)
-서류전형 발표: 12월 중순 예정
-1차 면접: 면접 일정은 추후 개별 안내
-최종 합격자 발표: 1월 중`;
+const SAMPLE = SAMPLE_POSTING_TEXT;
 
 const LINE: Record<PlannedStage["confidence"], string> = {
   high: "border-solid",
@@ -30,7 +25,7 @@ export default function Home() {
   const text = textInput ?? draft?.text ?? SAMPLE;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [resultState, setResult] = useState<{ extraction: PostingExtraction; plan: PlannedStage[] } | null>(null);
+  const [resultState, setResult] = useState<{ extraction: PostingExtraction; plan: PlannedStage[]; mode?: string } | null>(null);
   // 추천에서 수락한 공고는 공유 캐시(posting_cache)에 이미 분석된 결과를 바로 보여준다
   const draftResult = useMemo(
     () => (draft ? { extraction: draft.extraction, plan: estimateSchedule(draft.extraction.stages, draft.text) } : null),
@@ -103,6 +98,7 @@ export default function Home() {
 
         <section className="rounded-xl border border-dashed border-slate-300 p-4">
           <h2 className="font-semibold">{result ? `${result.extraction.company} · ${result.extraction.title}` : "추출 결과"}</h2>
+          {resultState?.mode && <ModeNote mode={resultState.mode} />}
           {fromCache && (
             <p className="mt-1 text-xs font-semibold text-teal-700">
               {draft?.source === "extension" ? "확장에서 가져온 공고 · 확인 후 캘린더에 추가하세요" : "추천에서 수락한 공고 · 공유 캐시의 분석 결과를 불러왔어요 (AI 재호출 없음)"}
@@ -139,4 +135,15 @@ export default function Home() {
       </div>
     </main>
   );
+}
+
+/** 어떤 경로의 결과인지 표시 (AI / 공유 캐시 / 시연용 미리 분석 / 규칙 기반 예비) */
+function ModeNote({ mode }: { mode: string }) {
+  const text: Record<string, string> = {
+    ai: "AI(Gemini)가 원문에서 추출한 결과예요.",
+    cache: "같은 공고를 이미 분석한 결과를 공유 캐시에서 불러왔어요 (AI 재호출 없음).",
+    demo: "시연용 공고라 미리 분석해 둔 결과를 보여줘요 (AI 연결 대기 중).",
+    rule: "AI 연결이 안 돼 규칙 기반 예비 결과를 보여줘요. 날짜와 근거를 꼭 확인해 주세요.",
+  };
+  return <p className={`mt-1 text-xs font-semibold ${mode === "rule" ? "text-accent" : "text-teal-700"}`}>{text[mode] ?? ""}</p>;
 }

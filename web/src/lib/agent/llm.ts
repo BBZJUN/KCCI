@@ -30,21 +30,29 @@ export function model(kind: "extract" | "reason"): string {
  * 스키마에 맞는 JSON을 받는다.
  * 1차: json_schema(strict) 구조화 출력. 공급자가 거부하면 2차: JSON 모드 + 스키마를 프롬프트로 전달 후 zod로 검증.
  */
-type Opts<S> = { kind: "extract" | "reason"; system: string; user: string; schema: S; name: string };
+type Opts<S> = { kind: "extract" | "reason"; system: string; user: string; schema: S; name: string; budget?: Budget };
+type Budget = { timeout: number; maxRetries: number };
+
+/** 웹 요청용 시간 제한: 화면이 오래 멈추지 않게 짧게 시도하고, 실패하면 호출한 쪽이 예비 경로로 넘어간다 (eval은 제한 없음) */
+export const WEB_BUDGET: Budget = { timeout: 15_000, maxRetries: 1 };
+
+export function llmConfigured(): boolean {
+  return !!(env("API_KEY") && env("MODEL_EXTRACT"));
+}
 
 export async function structured<S extends z.ZodType>(opts: Opts<S>): Promise<z.infer<S>> {
   const primary = model(opts.kind);
   const fallback = model("extract");
-  if (opts.kind === "extract" || primary === fallback) return call(primary, opts);
+  if (opts.kind === "extract" || primary === fallback) return call(primary, opts, opts.budget);
   // 문장 생성(REASON)은 상위 모델이 혼잡(503)·한도(429)·지연이면 짧게 포기하고 경량 모델로 대체 — 화면이 오래 멈추지 않게
   try {
     return await call(primary, opts, { timeout: 12_000, maxRetries: 0 });
   } catch {
-    return call(fallback, opts);
+    return call(fallback, opts, opts.budget);
   }
 }
 
-async function call<S extends z.ZodType>(modelName: string, opts: Opts<S>, req?: { timeout: number; maxRetries: number }): Promise<z.infer<S>> {
+async function call<S extends z.ZodType>(modelName: string, opts: Opts<S>, req?: Budget): Promise<z.infer<S>> {
   const c = getClient();
   const messages = [
     { role: "system" as const, content: opts.system },

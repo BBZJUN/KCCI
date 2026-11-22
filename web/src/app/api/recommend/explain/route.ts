@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { structured } from "@/lib/agent/llm";
+import { llmConfigured, structured, WEB_BUDGET } from "@/lib/agent/llm";
+import { allowLLM } from "@/lib/rateLimit";
 
 const Body = z.object({
   posting: z.object({ company: z.string(), title: z.string(), jobTags: z.array(z.string()), region: z.string(), preferredCerts: z.array(z.string()), stageSummary: z.string() }),
@@ -12,6 +13,9 @@ const Out = z.object({ reasons: z.array(z.string()).describe("각 25자 이내, 
 export async function POST(request: Request) {
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "잘못된 요청" }, { status: 400 });
+  // AI를 못 쓰면 규칙 근거를 그대로 돌려준다 (화면은 오류 없이 동작)
+  const ruleOnly = () => Response.json({ reasons: parsed.data.ruleReasons.slice(0, 3), mode: "rule" });
+  if (!llmConfigured() || !allowLLM(request)) return ruleOnly();
   try {
     const out = await structured({
       kind: "reason",
@@ -19,9 +23,10 @@ export async function POST(request: Request) {
       user: JSON.stringify(parsed.data),
       schema: Out,
       name: "recommend_reasons",
+      budget: WEB_BUDGET,
     });
-    return Response.json(out);
-  } catch (e) {
-    return Response.json({ error: (e as Error).message }, { status: 502 });
+    return Response.json({ ...out, mode: "ai" });
+  } catch {
+    return ruleOnly();
   }
 }

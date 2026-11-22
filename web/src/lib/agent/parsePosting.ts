@@ -1,5 +1,5 @@
 import { PostingExtraction } from "../schemas";
-import { model, structured } from "./llm";
+import { model, structured, WEB_BUDGET } from "./llm";
 import { getPostingCache, postingHash } from "./cache";
 import { estimateSchedule } from "./estimateSchedule";
 import { normalizeStages } from "./normalizeStages";
@@ -18,7 +18,7 @@ const SYSTEM = `너는 한국 채용 공고에서 전형 일정을 구조화하�
 - 공고에 없는 단계를 추측해서 추가하지 않는다.`;
 
 /** opts.cache=false: 평가(eval)처럼 매번 모델 성능을 재야 할 때 공유 캐시를 건너뛴다 */
-export async function parsePosting(text: string, today: string, sourceUrl?: string, opts: { cache?: boolean } = {}) {
+export async function parsePosting(text: string, today: string, sourceUrl?: string, opts: { cache?: boolean; web?: boolean } = {}) {
   const useCache = opts.cache !== false;
   const cache = getPostingCache();
   const hash = postingHash(text);
@@ -31,6 +31,7 @@ export async function parsePosting(text: string, today: string, sourceUrl?: stri
     user: `today=${today}\n\n[공고 원문]\n${text}`,
     schema: PostingExtraction,
     name: "posting_extraction",
+    budget: opts.web ? WEB_BUDGET : undefined,
   });
   const extraction = { ...raw, stages: normalizeStages(raw.stages) };
   if (useCache) await cache.set(hash, { extraction, model: model("extract"), createdAt: new Date().toISOString() }, sourceUrl);
