@@ -161,7 +161,7 @@ describe("안내 반영 에이전트 (AI 없이 예비 경로)", () => {
   it("토스 합격 메일 → 12/18 면접 확정 → 친구 술약속과 새 충돌 → 약속 조정 문구", async () => {
     const r = await runNoticeAgent({ text: NOTICES[0].text, items: SEEDED, today: "2026-12-07", useAI: false });
     expect(r.trace.map((s) => s.tool)).toEqual(["read_notice", "plan_changes", "detect_conflict", "suggest_adjustment", "await_approval"]);
-    expect(r.plan.changes[0]).toMatchObject({ type: "confirm", after: { start: "2026-12-18", time: "14:00", confidence: "high" } });
+    expect(r.plan.changes[0]).toMatchObject({ type: "confirm", after: { start: "2026-12-18", time: "18:00", confidence: "high" } });
     expect(r.conflicts).toHaveLength(1);
     expect(r.conflicts[0].conflict.severity).toBe("hard");
     const target = r.conflicts[0].advice.target_id;

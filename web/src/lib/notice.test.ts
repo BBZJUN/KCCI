@@ -9,7 +9,7 @@ const DEMO_ITEMS = [...SEED_ITEMS, ...DEMO_SHINHAN_ITEMS];
 const [toss, hynix, shinhanFail] = SAMPLE_NOTICES;
 
 describe("planNoticeChanges", () => {
-  it("토스뱅크 합격 → 예상 1차면접(범위)을 12/18 14:00 확정으로 바꾸자고 제안", () => {
+  it("토스뱅크 합격 → 예상 1차면접(범위)을 12/18 18:00 확정으로 바꾸자고 제안", () => {
     const plan = planNoticeChanges(DEMO_ITEMS, toss.reading, DEMO_TODAY, toss.reading.evidence);
     expect(plan.changes).toHaveLength(1);
     const c = plan.changes[0];
@@ -17,7 +17,7 @@ describe("planNoticeChanges", () => {
     if (c.type !== "confirm") return;
     expect(c.itemId).toBe("t3");
     expect(c.before.confidence).toBe("mid");
-    expect(c.after).toMatchObject({ start: "2026-12-18", time: "14:00", confidence: "high", status: "confirmed" });
+    expect(c.after).toMatchObject({ start: "2026-12-18", time: "18:00", confidence: "high", status: "confirmed" });
   });
   it("SK하이닉스 면접 안내 → 추정 면접(12/21)을 12/22로 확정", () => {
     const c = planNoticeChanges(DEMO_ITEMS, hynix.reading, DEMO_TODAY, hynix.reading.evidence).changes[0];

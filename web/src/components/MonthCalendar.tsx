@@ -101,13 +101,18 @@ export default function MonthCalendar({ items, today, onConfirm, onCancel, onRem
                       <button
                         onClick={() => setSelected(it.id)}
                         style={chipStyle(it, current.has(it.id))}
-                        className="w-full truncate rounded px-1 py-px text-left text-[10.5px] font-semibold leading-4"
-                        title={`${it.label} · ${CONFIDENCE_LABEL[it.confidence]}`}
+                        className="block w-full rounded px-1 py-px text-left text-[10.5px] font-semibold leading-4"
+                        title={`${it.label} · ${CONFIDENCE_LABEL[it.confidence]}${it.time ? ` · ${it.time}` : it.confidence !== "high" ? " · 시간 미정" : ""}`}
                       >
-                        {it.confidence !== "high" && <span className="mr-0.5 font-normal">{it.confidence === "mid" ? "범위" : "추정"}</span>}
-                        {it.label}
-                        {isLongRange(it) && <span className="font-normal"> ~{Number(it.end.slice(5, 7))}/{Number(it.end.slice(8))}</span>}
-                        {current.has(it.id) && " · 현재"}
+                        <span className="block truncate">
+                          {it.confidence !== "high" && <span className="mr-0.5 font-normal">{it.confidence === "mid" ? "범위" : "추정"}</span>}
+                          {it.label}
+                          {current.has(it.id) && " · 현재"}
+                        </span>
+                        {/* 둘째 줄: 확정은 시각, 범위·추정은 '시간 미정' (긴 구간은 끝날짜) */}
+                        <span className="block truncate text-[9.5px] font-normal leading-3 opacity-90">
+                          {it.confidence === "high" ? it.time ?? "" : isLongRange(it) ? `~${Number(it.end.slice(5, 7))}/${Number(it.end.slice(8))} · 시간 미정` : "시간 미정"}
+                        </span>
                       </button>
                     </li>
                   ))}
@@ -148,7 +153,10 @@ export default function MonthCalendar({ items, today, onConfirm, onCancel, onRem
               <b>{sel.label}</b>
               <span className="ml-auto rounded-full bg-panel px-2 py-0.5 text-xs font-semibold text-head">{CONFIDENCE_LABEL[sel.confidence]}</span>
             </div>
-            <p>{sel.start === sel.end ? sel.start : `${sel.start} ~ ${sel.end}`}</p>
+            <p>
+              {sel.start === sel.end ? sel.start : `${sel.start} ~ ${sel.end}`}
+              <span className="ml-2 text-muted">{sel.confidence === "high" && sel.time ? sel.time : sel.confidence === "high" ? "종일" : "시간 미정"}</span>
+            </p>
             <p className="rounded-md bg-panel p-2 text-xs italic text-muted">근거 “{sel.evidence || "없음"}”</p>
             {sel.confidence !== "high" && sel.status !== "cancelled" && onConfirm && (
               <button onClick={() => onConfirm(sel.id)} className="w-full rounded-lg bg-accent py-2 font-semibold text-white">
