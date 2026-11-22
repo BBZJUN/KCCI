@@ -40,5 +40,10 @@
 - [x] AI 예비 경로: 키 없음·오류·한도·혼잡이면 시연 결과 → 규칙 추출·판독 (`src/lib/agent/fallback.ts`, 테스트 포함). 웹 요청은 15초 제한
 - [x] IP당 분당 12회 제한 (`src/lib/rateLimit.ts`), 초과 시 예비 경로
 - [x] 첫 방문 '시연 데이터로 시작하기' 안내
-- [ ] Vercel 배포 (Root Directory `web`, 환경변수 4개) → URL을 README·소개서 07에
+- [x] Vercel 배포 https://kcci-beta.vercel.app
 - [x] 평가셋 보강: 비정형 공고 10건(41단계) — 규칙 0/41 vs AI 41/41, 소개서 03·08 반영
+
+## 고도화 (2026-11-22)
+- [x] 캡처 이미지 판독 (`transcribeCapture`, 시연용 캡처 `public/samples/notice-sms.png`)
+- [x] 안내 반영 에이전트 + 실행 기록 화면 (`/api/agent/notice`, `noticeAgent.ts`)
+- [x] 캘린더 .ics 내보내기 (`src/lib/ics.ts`)

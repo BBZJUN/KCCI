@@ -30,7 +30,7 @@ export function model(kind: "extract" | "reason"): string {
  * 스키마에 맞는 JSON을 받는다.
  * 1차: json_schema(strict) 구조화 출력. 공급자가 거부하면 2차: JSON 모드 + 스키마를 프롬프트로 전달 후 zod로 검증.
  */
-type Opts<S> = { kind: "extract" | "reason"; system: string; user: string; schema: S; name: string; budget?: Budget };
+type Opts<S> = { kind: "extract" | "reason"; system: string; user: string; schema: S; name: string; budget?: Budget; images?: string[] };
 type Budget = { timeout: number; maxRetries: number };
 
 /** 웹 요청용 시간 제한: 화면이 오래 멈추지 않게 짧게 시도하고, 실패하면 호출한 쪽이 예비 경로로 넘어간다 (eval은 제한 없음) */
@@ -54,9 +54,13 @@ export async function structured<S extends z.ZodType>(opts: Opts<S>): Promise<z.
 
 async function call<S extends z.ZodType>(modelName: string, opts: Opts<S>, req?: Budget): Promise<z.infer<S>> {
   const c = getClient();
-  const messages = [
-    { role: "system" as const, content: opts.system },
-    { role: "user" as const, content: opts.user },
+  // 이미지(캡처)는 data URL로 함께 보낸다 — OpenAI 호환 image_url 형식 (Gemini 지원)
+  const userContent: OpenAI.Chat.Completions.ChatCompletionContentPart[] | string = opts.images?.length
+    ? [{ type: "text", text: opts.user }, ...opts.images.map((url) => ({ type: "image_url" as const, image_url: { url } }))]
+    : opts.user;
+  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+    { role: "system", content: opts.system },
+    { role: "user", content: userContent },
   ];
   try {
     const res = await c.chat.completions.parse({ model: modelName, messages, response_format: zodResponseFormat(opts.schema, opts.name) }, req);
