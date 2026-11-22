@@ -1,5 +1,5 @@
 import { NoticeReading } from "../schemas";
-import { structured } from "./llm";
+import { structured, WEB_BUDGET } from "./llm";
 import { evidenceInSource } from "./evidence";
 import { maskPII } from "./pii";
 
@@ -11,7 +11,7 @@ const SYSTEM = `너는 채용 결과·일정 안내 메일/문자를 판독하�
 - 연도가 없으면 기준일(today) 이후 가장 가까운 날짜로 해석한다.
 - evidence에는 판단 근거 원문 문장을 그대로 복사한다. 원문에 없는 내용은 지어내지 않는다.`;
 
-export async function readNotice(text: string, today: string) {
+export async function readNotice(text: string, today: string, opts: { web?: boolean } = {}) {
   const masked = maskPII(text);
   const reading = await structured({
     kind: "extract",
@@ -19,6 +19,7 @@ export async function readNotice(text: string, today: string) {
     user: `today=${today}\n\n[안내 원문]\n${masked}`,
     schema: NoticeReading,
     name: "notice_reading",
+    budget: opts.web ? WEB_BUDGET : undefined,
   });
   return { reading, evidence_missing: !evidenceInSource(reading.evidence, masked) };
 }

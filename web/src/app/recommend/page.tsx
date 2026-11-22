@@ -63,7 +63,7 @@ function Card({ r, onAccept }: { r: Ranked; onAccept: () => void }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setAi(data.reasons);
-      setAiMsg(null);
+      setAiMsg(data.mode === "rule" ? "AI 연결 전이라 규칙 근거를 그대로 보여줘요." : null);
     } catch {
       setAiMsg("API 키를 설정하면 AI 설명을 볼 수 있어요. 지금은 규칙 기반 이유를 보여줘요.");
     }

@@ -90,3 +90,11 @@ export const DEMO_ITEMS: CalendarItem[] = seeds.map(([id, groupId, label, compan
   id, groupId, label, company, color, category, start, end, confidence, evidence,
   status: status ?? (confidence === "high" ? "confirmed" : "planned"),
 }));
+
+/** 화면 ② 기본 예시 공고 원문 (SAMPLE_EXTRACTION의 원문) */
+export const SAMPLE_POSTING_TEXT = `[신한은행] 2026 하반기 신입행원 채용 (디지털/ICT) — 시연용 가상 공고
+접수기간: 11.20(금)~12.2(수) 17:00
+AI역량검사: 12.7~12.8 (온라인)
+서류전형 발표: 12월 중순 예정
+1차 면접: 면접 일정은 추후 개별 안내
+최종 합격자 발표: 1월 중`;

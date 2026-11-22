@@ -119,3 +119,35 @@ describe("추출 결과 정리 규칙", () => {
     expect(normalizeStages([st({ start: "2026-12-11", end: "2026-12-20", evidence: "서류전형 발표: 12월 중순 예정" })])[0].kind).toBe("range");
   });
 });
+
+import { knownPosting, ruleExtract, ruleNotice, timeIn } from "./fallback";
+import { SAMPLE_POSTING_TEXT } from "../demo";
+import { POSTINGS } from "../postings";
+
+describe("AI 예비 경로 (키 없음·한도·혼잡)", () => {
+  it("시연용 공고는 미리 분석한 결과를 쓴다", () => {
+    expect(knownPosting(SAMPLE_POSTING_TEXT)?.company).toBe("신한은행");
+    expect(knownPosting(POSTINGS[2].text + "\n\n")?.company).toBe(POSTINGS[2].extraction.company);
+    expect(knownPosting("[가상] 다른 공고\n서류 접수: 12.1~12.5")).toBeNull();
+  });
+  it("규칙 추출: 접수 마감·확정·범위·미정을 구분한다", () => {
+    const ex = ruleExtract("[가상은행] IT 신입\n■ 서류 접수: 11.20(금) ~ 12.2(수) 17:00까지\n■ AI역량검사: 12.7~12.8\n■ 1차 면접: 12월 중순\n■ 최종 발표: 추후 안내", "2026-11-20");
+    expect(ex.company).toBe("가상은행");
+    expect(ex.stages.map((s) => [s.stage_type, s.kind, s.start, s.end])).toEqual([
+      ["document_deadline", "fixed", "2026-12-02", "2026-12-02"],
+      ["ai_assessment", "fixed", "2026-12-07", "2026-12-08"],
+      ["interview_1", "range", "2026-12-11", "2026-12-20"],
+      ["final_result", "tbd", null, null],
+    ]);
+    expect(ex.stages[0].time).toBe("17:00");
+  });
+  it("규칙 추출: 해가 바뀌는 날짜는 다음 해로", () => {
+    expect(ruleExtract("[가상] 공고\n면접: 1월 6일", "2026-11-20").stages[0].start).toBe("2027-01-06");
+  });
+  it("규칙 판독: 합격·불합격·다음 전형 날짜와 시각", () => {
+    const pass = ruleNotice("[가상] 서류 합격 안내\n1차 면접은 12월 18일(금) 오후 2시, 화상으로 진행됩니다.", "2026-12-14");
+    expect([pass.result, pass.next_stage?.stage_type, pass.next_stage?.date, pass.next_stage?.time, pass.next_stage?.mode]).toEqual(["pass", "interview_1", "2026-12-18", "14:00", "화상"]);
+    expect(ruleNotice("[가상] 결과 안내\n아쉽게도 이번에는 함께하지 못하게 되었습니다.", "2026-12-14")).toMatchObject({ result: "fail", next_stage: null });
+    expect(timeIn("오전 9시 30분")).toBe("09:30");
+  });
+});

@@ -43,6 +43,7 @@ export default function NoticesPage() {
   const [plan, setPlan] = useState<NoticePlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<string | null>(null);
   const [applied, setApplied] = useState(false);
 
   function show(r: NoticeReading, missing: boolean) {
@@ -60,6 +61,7 @@ export default function NoticesPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       show(data.reading, data.evidence_missing);
+      setMode(data.mode ?? null);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -72,6 +74,7 @@ export default function NoticesPage() {
     setText(s.text);
     setError(null);
     show(s.reading, false);
+    setMode(null);
   }
 
   return (
@@ -105,6 +108,7 @@ export default function NoticesPage() {
 
         <section className="rounded-xl border border-dashed border-slate-300 p-4">
           <h2 className="font-semibold">AI 판독 결과</h2>
+          {mode === "rule" && <p className="mt-1 text-xs font-semibold text-accent">AI 연결이 안 돼 규칙 기반 예비 판독이에요. 날짜와 근거를 꼭 확인해 주세요.</p>}
           {!reading && <p className="mt-3 text-sm text-muted">왼쪽에서 안내를 판독하면 여기에 제안이 나타나요.</p>}
           {reading && plan && (
             <div className="mt-3 space-y-4">

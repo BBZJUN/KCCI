@@ -19,12 +19,22 @@ npm run eval -- postings        # 키가 제대로 붙었는지 확인 (약 2분
    - `POST /api/applications`, `GET /api/calendar`: `Authorization: Bearer <사용자 access token>`으로 호출, RLS가 본인 데이터만 허용
    - 로그인 UI를 붙이기 전까지 웹 화면은 브라우저 저장소(`src/lib/store.ts`)를 쓴다. 키가 없으면 두 API는 501을 돌려준다.
 
+## 키가 없거나 AI가 막혀도 동작 (MVP 예비 경로)
+| 상황 | 동작 | 화면 표시 |
+|---|---|---|
+| 정상 | Gemini로 추출·판독·문구 (요청당 15초 제한, 1회 재시도) | 'AI(Gemini)가 추출한 결과' |
+| 같은 공고 재요청 | 공유 캐시 | '공유 캐시에서 불러왔어요' |
+| 키 없음 / 키 오류 / 무료 한도 / 혼잡(503) / IP당 분당 12회 초과 | 시연용 공고·안내면 미리 분석한 결과, 아니면 줄 단위 규칙 추출·판독 | '규칙 기반 예비 결과… 확인해 주세요' |
+| 추천 이유·조정 문구 | 규칙 근거 / 기본 문구 | '규칙 근거를 그대로…' / '기본 문구' |
+
+목업으로 둔 것: 추천 공고 5건(잡알리오 API 대신 가상 공고), 자격증 일정(Q-net 대신 직접 입력), 로그인·서버 저장(브라우저 저장소). 서버 API·DB 스키마는 있음.
+
 ## 3. Vercel
 1. vercel.com → Add New Project → GitHub `BBZJUN/KCCI` 선택
 2. **Root Directory: `web`** (Framework: Next.js 자동 인식)
 3. Environment Variables에 `.env.local`과 같은 값 입력
    - 필수: `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL_EXTRACT`, `LLM_MODEL_REASON`
-   - 선택: Supabase 3개, `DATA_GO_KR_SERVICE_KEY`
+   - 선택: `LLM_RATE_PER_MIN`(기본 12), Supabase 3개, `DATA_GO_KR_SERVICE_KEY` — 비워 두면 메모리 캐시·브라우저 저장소로 동작
 4. Deploy → 배포 주소 확인 (예: `https://jobdori.vercel.app`)
 5. `/calendar`에서 '시연 데이터 불러오기' → 충돌 경고의 '조정 문구 제안'이 AI 문구로 나오면 키 연결 완료
 
