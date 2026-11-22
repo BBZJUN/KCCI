@@ -44,7 +44,14 @@ export default function MonthCalendar({ items, today, onConfirm, onCancel, onRem
   const badDates = useMemo(() => conflictDates(conflicts), [conflicts]);
   const current = useMemo(() => currentStageIds(items, today), [items, today]);
   const monthPrefix = `${ym.y}-${String(ym.m).padStart(2, "0")}`;
-  const monthConflicts = conflicts.filter((c) => c.overlapStart.startsWith(monthPrefix));
+  // 확정끼리 겹침(hard)은 모두, 추정이 낀 겹침(soft)은 2건만 먼저 보여주고 나머지는 접어 둔다
+  const monthAll = conflicts
+    .filter((c) => c.overlapStart.startsWith(monthPrefix))
+    .sort((x, y) => (x.severity === y.severity ? x.overlapStart.localeCompare(y.overlapStart) : x.severity === "hard" ? -1 : 1));
+  const [showAllSoft, setShowAllSoft] = useState(false);
+  const hardCount = monthAll.filter((c) => c.severity === "hard").length;
+  const monthConflicts = showAllSoft ? monthAll : monthAll.slice(0, hardCount + 2);
+  const hiddenSoft = monthAll.length - monthConflicts.length;
   const sel = items.find((i) => i.id === selected) ?? null;
   const legend = useMemo(() => {
     const seen = new Map<string, string>();
@@ -138,6 +145,13 @@ export default function MonthCalendar({ items, today, onConfirm, onCancel, onRem
                 <ConflictAdviceButton conflict={c} />
               </li>
             ))}
+            {hiddenSoft > 0 && (
+              <li>
+                <button onClick={() => setShowAllSoft(true)} className="w-full rounded-lg border border-dashed border-amber-400 py-1.5 text-sm font-semibold text-amber-700">
+                  추정 일정과 겹칠 수 있는 일정 {hiddenSoft}건 더 보기
+                </button>
+              </li>
+            )}
           </ul>
         )}
         <p className="mt-3 text-xs text-muted">실선 = 확정 · 점선 = 범위 추정 · 점점선 = 규칙 추정 · 테두리 강조 = 현재 진행 중인 전형</p>
