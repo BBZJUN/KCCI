@@ -29,6 +29,8 @@ export async function POST(request: Request) {
   const fallback = templateAdvice(c);
   const { target, keep } = pickTarget(c);
   const keepName = keep.title.split(" ")[0];
+  // 개인·자격증 일정을 옮기는 경우는 정해진 안내 문구로 충분 → AI 호출 안 함
+  if (target.category !== "application") return Response.json({ ...fallback, source: "template" });
   if (!llmConfigured() || !allowLLM(request)) return Response.json({ ...fallback, source: "template" });
   try {
     const ai = await structured({

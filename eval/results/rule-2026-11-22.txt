@@ -1,0 +1,47 @@
+# eval 2026-11-22 · model=gemini-3.5-flash-lite
+
+전형 추출 정확도 [postings · 규칙만]: 141/141 = 100.0%
+
+
+전형 추출 정확도 [postings-hard · 규칙만]: 0/41 = 0.0%
+h01#1 expected {"stage_type":"document_deadline","kind":"fixed","start":"2026-12-04","end":"2026-12-04"} got null
+h01#2 expected {"stage_type":"coding_test","kind":"fixed","start":"2026-12-12","end":"2026-12-12"} got null
+h01#3 expected {"stage_type":"test_result","kind":"fixed","start":"2026-12-18","end":"2026-12-18"} got null
+h01#4 expected {"stage_type":"interview_1","kind":"tbd","start":null,"end":null} got null
+h01#5 expected {"stage_type":"interview_2","kind":"tbd","start":null,"end":null} got null
+h02#1 expected {"stage_type":"document_deadline","kind":"fixed","start":"2026-12-07","end":"2026-12-07"} got null
+h02#2 expected {"stage_type":"written_test","kind":"fixed","start":"2026-12-13","end":"2026-12-13"} got null
+h02#3 expected {"stage_type":"interview_1","kind":"fixed","start":"2026-12-21","end":"2026-12-22"} got null
+h02#4 expected {"stage_type":"final_result","kind":"range","start":"2027-01-01","end":"2027-01-10"} got null
+h03#1 expected {"stage_type":"document_deadline","kind":"fixed","start":"2026-12-06","end":"2026-12-06"} got null
+h03#2 expected {"stage_type":"coding_test","kind":"fixed","start":"2026-12-10","end":"2026-12-10"} got null
+h03#3 expected {"stage_type":"interview_1","kind":"range","start":"2026-12-11","end":"2026-12-20"} got null
+h03#4 expected {"stage_type":"final_result","kind":"range","start":"2027-01-01","end":"2027-01-31"} got null
+h04#1 expected {"stage_type":"document_deadline","kind":"fixed","start":"2026-11-30","end":"2026-11-30"} got null
+h04#2 expected {"stage_type":"written_test","kind":"fixed","start":"2026-12-05","end":"2026-12-05"} got null
+h04#3 expected {"stage_type":"test_result","kind":"fixed","start":"2026-12-11","end":"2026-12-11"} got null
+h04#4 expected {"stage_type":"interview_1","kind":"fixed","start":"2026-12-18","end":"2026-12-18"} got null
+h05#1 expected {"stage_type":"document_deadline","kind":"fixed","start":"2026-12-08","end":"2026-12-08"} got null
+h05#2 expected {"stage_type":"written_test","kind":"fixed","start":"2026-12-20","end":"2026-12-20"} got null
+h05#3 expected {"stage_type":"interview_1","kind":"range","start":"2027-01-01","end":"2027-01-31"} got null
+h05#4 expected {"stage_type":"final_result","kind":"range","start":"2027-02-01","end":"2027-02-10"} got null
+h06#1 expected {"stage_type":"document_deadline","kind":"fixed","start":"2026-12-03","end":"2026-12-03"} got {"stage_name":"지원 마감은 12월 3일 목요일 자정(23","stage_type":"document_deadline","kind":"fixed","start":"2026-12-06","end":"2026-12-06","time":null,"evidence":"지원 마감은 12월 3일 목요일 자정(23:59)입니다. 과제 전형은 마감 다음 날부터 사흘간(12/4~12/6) 진행되고, 통과자에 한해 12월 중순에 1차 인터뷰를 진행합니다. 최종 결과는 추후 안내드립니다."}
+h06#2 expected {"stage_type":"coding_test","kind":"fixed","start":"2026-12-04","end":"2026-12-06"} got null
+h06#3 expected {"stage_type":"interview_1","kind":"range","start":"2026-12-11","end":"2026-12-20"} got null
+h06#4 expected {"stage_type":"final_result","kind":"tbd","start":null,"end":null} got null
+h07#1 expected {"stage_type":"document_deadline","kind":"fixed","start":"2026-12-09","end":"2026-12-09"} got null
+h07#2 expected {"stage_type":"ai_assessment","kind":"fixed","start":"2026-12-14","end":"2026-12-15"} got null
+h07#3 expected {"stage_type":"interview_1","kind":"range","start":"2026-12-21","end":"2026-12-31"} got null
+h07#4 expected {"stage_type":"interview_2","kind":"range","start":"2027-01-01","end":"2027-01-10"} got null
+h08#1 expected {"stage_type":"document_deadline","kind":"fixed","start":"2026-12-01","end":"2026-12-01"} got null
+h08#2 expected {"stage_type":"interview_1","kind":"tbd","start":null,"end":null} got null
+h08#3 expected {"stage_type":"interview_2","kind":"tbd","start":null,"end":null} got null
+h09#1 expected {"stage_type":"document_deadline","kind":"fixed","start":"2026-12-05","end":"2026-12-05"} got {"stage_name":"접수 ~2026-12-05(토) 23","stage_type":"document_deadline","kind":"tbd","start":null,"end":null,"time":null,"evidence":"접수 ~2026-12-05(토) 23:59 / 코딩테스트 2026-12-12(토) 10:00 / 면접 2026-12-21(월) 14:00 / 최종발표 익월(1월) 중순"}
+h09#2 expected {"stage_type":"coding_test","kind":"fixed","start":"2026-12-12","end":"2026-12-12"} got null
+h09#3 expected {"stage_type":"interview_1","kind":"fixed","start":"2026-12-21","end":"2026-12-21"} got null
+h09#4 expected {"stage_type":"final_result","kind":"range","start":"2027-01-11","end":"2027-01-20"} got null
+h10#1 expected {"stage_type":"document_deadline","kind":"fixed","start":"2026-12-02","end":"2026-12-02"} got null
+h10#2 expected {"stage_type":"coding_test","kind":"fixed","start":"2026-12-09","end":"2026-12-09"} got null
+h10#3 expected {"stage_type":"interview_1","kind":"fixed","start":"2026-12-16","end":"2026-12-16"} got null
+h10#4 expected {"stage_type":"interview_2","kind":"fixed","start":"2026-12-24","end":"2026-12-24"} got null
+h10#5 expected {"stage_type":"final_result","kind":"fixed","start":"2026-12-31","end":"2026-12-31"} got null

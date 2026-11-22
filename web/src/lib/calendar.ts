@@ -71,6 +71,19 @@ export function monthGrid(year: number, month1: number): { date: string; inMonth
   });
 }
 
+/**
+ * 달력 칸에 그릴 칩. 사흘 넘는 추정 구간(예: '12월 중순')은 매일 그리면 달력이 가려지므로
+ * 시작일과 각 주의 첫 칸(일요일·달력 첫 칸)에만 '~끝날짜'와 함께 그린다. 충돌 판단은 itemsOn(전체 구간)으로 한다.
+ */
+export function chipsOn(items: CalendarItem[], date: string, firstCell: string): CalendarItem[] {
+  const sunday = new Date(date + "T00:00:00Z").getUTCDay() === 0;
+  return itemsOn(items, date).filter((it) => !isLongRange(it) || it.start === date || sunday || date === firstCell);
+}
+
+export function isLongRange(it: CalendarItem): boolean {
+  return it.confidence !== "high" && (Date.parse(it.end) - Date.parse(it.start)) / 864e5 >= 3;
+}
+
 export function itemsOn(items: CalendarItem[], date: string): CalendarItem[] {
   const order: Record<Confidence, number> = { high: 0, mid: 1, low: 2 };
   return items

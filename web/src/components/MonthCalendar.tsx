@@ -7,7 +7,8 @@ import {
   conflictDates,
   currentStageIds,
   findConflicts,
-  itemsOn,
+  chipsOn,
+  isLongRange,
   monthGrid,
 } from "@/lib/calendar";
 import ConflictAdviceButton from "./ConflictAdviceButton";
@@ -77,7 +78,7 @@ export default function MonthCalendar({ items, today, onConfirm, onCancel, onRem
         </div>
         <div className="mt-1 grid grid-cols-7 border-l border-t border-slate-200">
           {grid.map(({ date, inMonth }) => {
-            const list = itemsOn(items, date);
+            const list = chipsOn(items, date, grid[0].date);
             const isToday = date === today;
             const sunday = new Date(date + "T00:00:00Z").getUTCDay() === 0;
             return (
@@ -105,6 +106,7 @@ export default function MonthCalendar({ items, today, onConfirm, onCancel, onRem
                       >
                         {it.confidence !== "high" && <span className="mr-0.5 font-normal">{it.confidence === "mid" ? "범위" : "추정"}</span>}
                         {it.label}
+                        {isLongRange(it) && <span className="font-normal"> ~{Number(it.end.slice(5, 7))}/{Number(it.end.slice(8))}</span>}
                         {current.has(it.id) && " · 현재"}
                       </button>
                     </li>

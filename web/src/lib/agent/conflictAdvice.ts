@@ -21,11 +21,18 @@ const md = (d: string) => `${Number(d.slice(5, 7))}월 ${Number(d.slice(8))}일`
 export function templateAdvice(c: Pick<Conflict, "a" | "b" | "overlapStart">): ConflictAdvice {
   const { target, keep } = pickTarget(c);
   const day = md(c.overlapStart);
-  if (target.category !== "application") {
+  if (target.category === "certificate") {
     return {
       target_id: target.id,
-      reason: `${keep.title}은(는) 기업 일정이라 바꾸기 어렵고, ${target.title}은(는) 직접 옮길 수 있어요.`,
-      message: `${day} ${target.title} 일정을 다른 날로 옮겨 주세요. 같은 날 ${keep.title}이(가) 있습니다.`,
+      reason: "자격증 시험은 날짜를 바꾸기 어려워요. 기업 쪽에 일정 조정을 먼저 문의해 보세요.",
+      message: `${day}에 ${target.title}이(가) 있어 ${keep.title} 일정 조정이 가능한지 채용 담당자에게 문의해 보세요.`,
+    };
+  }
+  if (target.category === "personal") {
+    return {
+      target_id: target.id,
+      reason: `${keep.title}은(는) 기업 일정이라 바꾸기 어렵고, ${target.title}은(는) 함께하는 사람들과 날짜를 다시 맞출 수 있어요.`,
+      message: `미안한데 ${day}에 중요한 일정이 갑자기 잡혀서 ${target.title} 날짜를 옮겨야 할 것 같아. 다른 날 가능한 날짜 알려주면 거기에 맞출게!`,
     };
   }
   const estimated = target.confidence !== "high";
