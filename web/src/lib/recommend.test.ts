@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { rankJobs, DEFAULT_PROFILE } from "./recommend";
 import { POSTINGS } from "./postings";
-import { DEMO_ITEMS, DEMO_TODAY } from "./demo";
+import { DEMO_ITEMS as SEED_ITEMS, DEMO_SHINHAN_ITEMS, DEMO_TODAY } from "./demo";
+
+// 첫 화면에서 신한 공고를 담은 뒤의 캘린더
+const DEMO_ITEMS = [...SEED_ITEMS, ...DEMO_SHINHAN_ITEMS];
 
 describe("rankJobs", () => {
   const ranked = rankJobs(POSTINGS, DEFAULT_PROFILE, DEMO_ITEMS, DEMO_TODAY);

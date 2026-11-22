@@ -16,10 +16,13 @@ import { DEMO_ITEMS, DEMO_TODAY } from "./demo";
 export type Draft = { postingId: string; text: string; extraction: PostingExtraction; color: string; source?: "recommend" | "extension"; sourceUrl?: string };
 type State = { items: CalendarItem[]; today: string | null; profile: Profile; dismissed: string[]; draft: Draft | null };
 
-const KEY = "jobdori:calendar:v1";
+const KEY = "jobdori:calendar:v2";
 const EMPTY: State = { items: [], today: null, profile: DEFAULT_PROFILE, dismissed: [], draft: null };
+/** 처음 방문하면 시연 인물(홍길동)의 12월 일정이 들어 있는 상태로 시작한다. '비우기' 하면 빈 캘린더. */
+const SEED: State = { ...EMPTY, items: DEMO_ITEMS, today: DEMO_TODAY };
 const listeners = new Set<() => void>();
-let cache: { raw: string | null; state: State } = { raw: null, state: EMPTY };
+// raw: undefined = 아직 안 읽음 (null = 저장된 값 없음 → SEED)
+let cache: { raw: string | null | undefined; state: State } = { raw: undefined, state: EMPTY };
 
 function read(): State {
   if (typeof window === "undefined") return EMPTY;
@@ -32,7 +35,7 @@ function read(): State {
   if (raw === cache.raw) return cache.state;
   let state: State = EMPTY;
   try {
-    state = raw ? { ...EMPTY, ...(JSON.parse(raw) as Partial<State>) } : EMPTY;
+    state = raw ? { ...EMPTY, ...(JSON.parse(raw) as Partial<State>) } : SEED;
   } catch {
     state = EMPTY;
   }
@@ -73,6 +76,12 @@ export function addItems(items: CalendarItem[]) {
 export function updateItem(id: string, patch: Partial<CalendarItem>) {
   const cur = read();
   write({ ...cur, items: cur.items.map((i) => (i.id === id ? { ...i, ...patch } : i)) });
+}
+
+/** 같은 공고를 다시 담으면 이전 일정을 새 결과로 바꾼다 (중복 방지) */
+export function replaceGroup(groupId: string, items: CalendarItem[]) {
+  const cur = read();
+  write({ ...cur, items: [...cur.items.filter((i) => i.groupId !== groupId), ...items] });
 }
 
 export function removeItem(id: string) {

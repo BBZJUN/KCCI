@@ -137,7 +137,7 @@ export default function NoticesPage() {
                     </li>
                   ))}
                 </ul>
-                {items.length === 0 && <p className="mt-2 text-xs text-muted">캘린더가 비어 있어요. 캘린더에서 &lsquo;시연 데이터 불러오기&rsquo;를 먼저 누르면 비교가 보여요.</p>}
+                {items.length === 0 && <p className="mt-2 text-xs text-muted">캘린더가 비어 있어요. 캘린더에서 &lsquo;시연 처음 상태로&rsquo;를 누르면 비교가 보여요.</p>}
               </div>
 
               {plan.changes.length > 0 && !applied && (

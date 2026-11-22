@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { DEMO_USER } from "@/lib/demo";
 import { POSTINGS } from "@/lib/postings";
 import { rankJobs, type Profile, type Ranked } from "@/lib/recommend";
 import { dismissPosting, setDraft, setProfile, useCalendar, useClientToday } from "@/lib/store";
@@ -115,7 +116,7 @@ export default function RecommendPage() {
       <div className="flex flex-wrap items-end gap-3">
         <div>
           <p className="text-sm font-semibold text-accent">잡도리</p>
-          <h1 className="text-3xl font-bold">오늘의 추천 공고</h1>
+          <h1 className="text-3xl font-bold">{DEMO_USER}님을 위한 오늘의 추천 공고</h1>
           <p className="mt-1 text-muted">관심 직무·지역·자격과 지금 캘린더의 일정 여유를 함께 보고 골랐어요.</p>
         </div>
         <Link href="/calendar" className="ml-auto rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold">내 캘린더 →</Link>

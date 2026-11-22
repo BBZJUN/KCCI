@@ -7,7 +7,7 @@ import type { PlannedStage, PostingExtraction } from "@/lib/schemas";
 import { estimateSchedule } from "@/lib/agent/estimateSchedule";
 import { applicationToItems, COMPANY_COLORS } from "@/lib/calendar";
 import { SAMPLE_EXTRACTION, SAMPLE_POSTING_TEXT } from "@/lib/demo";
-import { addItems, setDraft, useCalendar } from "@/lib/store";
+import { replaceGroup, setDraft, useCalendar } from "@/lib/store";
 
 const SAMPLE = SAMPLE_POSTING_TEXT;
 
@@ -56,18 +56,22 @@ export default function Home() {
 
   function addToCalendar() {
     if (!result) return;
-    const groups = new Set(items.map((i) => i.groupId));
+    // 같은 회사·공고명을 다시 담으면 기존 일정을 교체 (중복 방지)
+    const id = `app-${result.extraction.company}-${result.extraction.title}`.replace(/\s+/g, "-");
+    const existing = items.find((i) => i.groupId === id);
+    const groups = new Set(items.filter((i) => i.groupId !== id).map((i) => i.groupId));
     const app = {
-      id: `app-${Date.now()}`,
+      id,
       company: result.extraction.company,
       title: result.extraction.title,
-      color: fromCache && draft ? draft.color : COMPANY_COLORS[groups.size % COMPANY_COLORS.length],
+      color: existing?.color ?? (fromCache && draft ? draft.color : COMPANY_COLORS[groups.size % COMPANY_COLORS.length]),
       stages: result.plan,
     };
-    addItems(applicationToItems(app));
+    replaceGroup(id, applicationToItems(app));
     setDraft(null);
     router.push("/calendar");
   }
+
 
   const datedCount = result?.plan.filter((s) => s.start).length ?? 0;
 

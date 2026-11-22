@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { planNoticeChanges } from "./notice";
-import { DEMO_ITEMS, DEMO_TODAY, SAMPLE_NOTICES } from "./demo";
+import { DEMO_ITEMS as SEED_ITEMS, DEMO_SHINHAN_ITEMS, DEMO_TODAY, SAMPLE_NOTICES } from "./demo";
 import { findConflicts } from "./calendar";
+
+// 첫 화면에서 신한 공고를 담은 뒤의 캘린더
+const DEMO_ITEMS = [...SEED_ITEMS, ...DEMO_SHINHAN_ITEMS];
 
 const [toss, hynix, shinhanFail] = SAMPLE_NOTICES;
 

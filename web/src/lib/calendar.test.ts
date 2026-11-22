@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applicationToItems, conflictDates, currentStageIds, findConflicts, itemsOn, monthGrid } from "./calendar";
 import type { CalendarItem } from "./calendar";
-import { DEMO_ITEMS, DEMO_TODAY, SAMPLE_EXTRACTION } from "./demo";
+import { DEMO_ITEMS as SEED_ITEMS, DEMO_SHINHAN_ITEMS, DEMO_TODAY, SAMPLE_EXTRACTION } from "./demo";
 import { estimateSchedule } from "./agent/estimateSchedule";
 
 describe("monthGrid", () => {
@@ -61,6 +61,9 @@ describe("Supabase 행 변환", () => {
 
 import { decodeImport, encodeImport } from "./importPayload";
 
+// 첫 화면에서 신한 공고를 담은 뒤의 캘린더
+const DEMO_ITEMS = [...SEED_ITEMS, ...DEMO_SHINHAN_ITEMS];
+
 describe("확장 → /import 페이로드", () => {
   it("한글 원문과 추출 결과가 왕복 후 그대로 남는다", () => {
     const p = { text: "신한은행 2026 하반기 신입 — 접수기간: 11.20~12.2", extraction: SAMPLE_EXTRACTION, sourceUrl: "https://example.com/p/1", hash: "abc" };
@@ -69,5 +72,20 @@ describe("확장 → /import 페이로드", () => {
   it("깨진 값은 null", () => {
     expect(decodeImport("#not-base64!!")).toBeNull();
     expect(decodeImport("#" + btoa("{}"))).toBeNull();
+  });
+});
+
+import { chipsOn } from "./calendar";
+
+describe("긴 추정 구간 칩", () => {
+  it("사흘 넘는 범위는 시작일·일요일에만 그리고, 짧은 범위·확정은 매일 그린다", () => {
+    const base = { groupId: "g", company: "가상", color: "#000", category: "application" as const, evidence: "", status: "planned" as const };
+    const items: CalendarItem[] = [
+      { ...base, id: "r", label: "서류발표", start: "2026-12-11", end: "2026-12-20", confidence: "mid" },
+      { ...base, id: "f", label: "AI역검", start: "2026-12-07", end: "2026-12-08", confidence: "high" },
+    ];
+    const days = (id: string) => ["2026-12-07", "2026-12-08", "2026-12-11", "2026-12-12", "2026-12-13", "2026-12-14"].filter((d) => chipsOn(items, d, "2026-11-29").some((i) => i.id === id));
+    expect(days("r")).toEqual(["2026-12-11", "2026-12-13"]);
+    expect(days("f")).toEqual(["2026-12-07", "2026-12-08"]);
   });
 });

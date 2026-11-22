@@ -4,6 +4,7 @@ import Link from "next/link";
 import MonthCalendar from "@/components/MonthCalendar";
 import AddEventForm from "@/components/AddEventForm";
 import { addItems, clearAll, removeItem, resetDemo, updateItem, useCalendar, useClientToday } from "@/lib/store";
+import { DEMO_USER } from "@/lib/demo";
 
 export default function CalendarPage() {
   const { items, today } = useCalendar();
@@ -16,19 +17,19 @@ export default function CalendarPage() {
       <div className="flex flex-wrap items-end gap-3">
         <div>
           <p className="text-sm font-semibold text-accent">잡도리</p>
-          <h1 className="text-3xl font-bold">내 취준 캘린더</h1>
+          <h1 className="text-3xl font-bold">{DEMO_USER}님의 취준 캘린더</h1>
         </div>
         <nav className="ml-auto flex gap-2 text-sm">
           <Link href="/" className="rounded-lg bg-navy px-3 py-2 font-semibold text-white">+ 공고 담기</Link>
           <Link href="/recommend" className="rounded-lg border border-slate-300 px-3 py-2 font-semibold">추천 공고</Link>
           <Link href="/notices" className="rounded-lg bg-accent px-3 py-2 font-semibold text-white">안내 반영</Link>
-          <button onClick={resetDemo} className="rounded-lg border border-slate-300 px-3 py-2 font-semibold">시연 데이터 불러오기</button>
+          <button onClick={resetDemo} className="rounded-lg border border-slate-300 px-3 py-2 font-semibold">시연 처음 상태로</button>
           {items.length > 0 && <button onClick={clearAll} className="rounded-lg px-3 py-2 text-muted">비우기</button>}
         </nav>
       </div>
       {today && (
         <p className="mt-2 text-xs text-muted">
-          시연 기준일 {today} · 기업명은 예시이며 공고·일정은 모두 가상입니다.
+          시연 인물 {DEMO_USER}(가상) · 기준일 {today} · 기업명은 예시이며 공고·일정은 모두 가상입니다.
         </p>
       )}
 
@@ -42,7 +43,7 @@ export default function CalendarPage() {
         {items.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center">
             <p className="font-semibold">아직 담은 공고가 없어요.</p>
-            <p className="mt-1 text-sm text-muted">공고를 담거나 시연 데이터를 불러와 보세요.</p>
+            <p className="mt-1 text-sm text-muted">공고를 담거나 &lsquo;시연 처음 상태로&rsquo;를 눌러 보세요.</p>
           </div>
         ) : (
           <MonthCalendar
