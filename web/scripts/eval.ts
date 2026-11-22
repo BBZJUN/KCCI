@@ -3,6 +3,8 @@
  *   npm run eval                 # 공고 + 메일
  *   npm run eval -- postings     # 공고만
  *   npm run eval -- notices      # 메일만
+ *   npm run eval -- hard         # 서술형·표·영문 등 어려운 공고 10건 (AI)
+ *   npm run eval -- rule         # 같은 공고를 규칙 추출만으로 (AI 없이 비교 기준)
  * - 공고: 단계 단위 정답 = stage_type, kind, start, end 모두 일치
  * - 메일: 건 단위 정답 = result, 다음 단계 stage_type·date·time 모두 일치
  * 무료 등급 분당 한도 때문에 순차 실행한다 (429는 llm.ts 재시도에 맡김). 충돌 시나리오는 npm test가 검증.
@@ -11,6 +13,8 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { parsePosting } from "../src/lib/agent/parsePosting";
 import { readNotice } from "../src/lib/agent/readNotice";
+import { ruleExtract } from "../src/lib/agent/fallback";
+import type { PostingExtraction } from "../src/lib/schemas";
 
 const root = join(__dirname, "..", "..", "eval");
 const jsonl = <T>(path: string): T[] => readFileSync(path, "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l) as T);
@@ -21,15 +25,20 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 type PostingAns = { id: string; today: string; stages: { stage_type: string; kind: string; start: string | null; end: string | null }[] };
 type NoticeAns = { id: string; today: string; result: string; next: { stage_type: string; date: string | null; time: string | null } | null };
 
-async function evalPostings() {
-  const answers = jsonl<PostingAns>(join(root, "postings", "answers.jsonl"));
+type Extractor = (text: string, today: string) => Promise<{ extraction: PostingExtraction; plan: { evidence_missing: boolean }[] }>;
+const aiExtract: Extractor = (text, today) => parsePosting(text, today, undefined, { cache: false });
+const ruleOnly: Extractor = async (text, today) => ({ extraction: ruleExtract(text, today), plan: [] });
+
+async function evalPostings(dir = "postings", extract: Extractor = aiExtract, label = "전형 추출 정확도") {
+  const answers = jsonl<PostingAns>(join(root, dir, "answers.jsonl"));
+  const isRule = extract === ruleOnly;
   let total = 0, hit = 0, evidenceMissing = 0;
   const rows: string[] = [];
   for (const [n, a] of answers.entries()) {
-    if (n > 0) await sleep(GAP_MS);
-    const text = readFileSync(join(root, "postings", `${a.id}.txt`), "utf8");
+    if (n > 0 && !isRule) await sleep(GAP_MS);
+    const text = readFileSync(join(root, dir, `${a.id}.txt`), "utf8");
     try {
-      const { extraction, plan } = await parsePosting(text, a.today, undefined, { cache: false });
+      const { extraction, plan } = await extract(text, a.today);
       evidenceMissing += plan.filter((p) => p.evidence_missing).length;
       a.stages.forEach((exp, i) => {
         const got = extraction.stages[i];
@@ -44,10 +53,10 @@ async function evalPostings() {
       total += a.stages.length;
       rows.push(`${a.id}: 호출 실패 ${(e as Error).message}`);
     }
-    process.stdout.write(`\r공고 ${n + 1}/${answers.length}`);
+    process.stdout.write(`\r${dir} ${n + 1}/${answers.length}`);
   }
   const acc = total ? (hit / total) * 100 : 0;
-  return `전형 추출 정확도: ${hit}/${total} = ${acc.toFixed(1)}% (근거 확인 필요 ${evidenceMissing}건)\n${rows.join("\n")}`;
+  return `${label} [${dir}${isRule ? " · 규칙만" : " · AI"}]: ${hit}/${total} = ${acc.toFixed(1)}%${isRule ? "" : ` (근거 확인 필요 ${evidenceMissing}건)`}\n${rows.join("\n")}`;
 }
 
 async function evalNotices() {
@@ -78,6 +87,11 @@ async function main() {
   const which = process.argv[2] ?? "all";
   const parts: string[] = [];
   if (which === "all" || which === "postings") parts.push(await evalPostings());
+  if (which === "all" || which === "hard") parts.push(await evalPostings("postings-hard"));
+  if (which === "all" || which === "rule") {
+    parts.push(await evalPostings("postings", ruleOnly));
+    parts.push(await evalPostings("postings-hard", ruleOnly));
+  }
   if (which === "all" || which === "notices") parts.push(await evalNotices());
   const report = `# eval ${stamp} · model=${process.env.LLM_MODEL_EXTRACT ?? process.env.OPENAI_MODEL_EXTRACT ?? "?"}\n\n${parts.join("\n\n")}\n`;
   console.log("\n\n" + report);
