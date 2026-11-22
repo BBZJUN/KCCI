@@ -100,3 +100,22 @@ describe("충돌 조정 대상 (코드 규칙)", () => {
     expect(adv.message).toContain("12월 17일");
   });
 });
+
+import { normalizeStages } from "./normalizeStages";
+
+describe("추출 결과 정리 규칙", () => {
+  const st = (p: Partial<ExtractedStage>): ExtractedStage => ({ stage_name: "s", stage_type: "other", kind: "range", start: null, end: null, time: null, evidence: "", ...p });
+  it("서류 접수 기간은 마감일 하루(확정)로 올린다", () => {
+    const [s] = normalizeStages([st({ stage_type: "document_deadline", start: "2026-11-20", end: "2026-12-02", evidence: "접수기간: 11.20(금)~12.2(수) 17:00" })]);
+    expect([s.kind, s.start, s.end]).toEqual(["fixed", "2026-12-02", "2026-12-02"]);
+  });
+  it("'1월 중'은 그 달 전체, '1월 중순'은 그대로", () => {
+    expect(normalizeStages([st({ start: "2027-01-11", end: "2027-01-20", evidence: "최종 합격자 발표: 1월 중" })])[0]).toMatchObject({ start: "2027-01-01", end: "2027-01-31" });
+    expect(normalizeStages([st({ start: "2027-01-11", end: "2027-01-20", evidence: "최종 발표: 1월 중순 예정" })])[0]).toMatchObject({ start: "2027-01-11", end: "2027-01-20" });
+  });
+  it("날짜가 둘 다 적힌 기간은 확정, '12월 중순'은 범위 유지", () => {
+    expect(normalizeStages([st({ start: "2026-12-07", end: "2026-12-08", evidence: "AI역량검사: 12.7(월) ~ 12.8(화)" })])[0].kind).toBe("fixed");
+    expect(normalizeStages([st({ start: "2026-12-22", end: "2026-12-23", evidence: "1차 면접: 12월 22일 ~ 12월 23일" })])[0].kind).toBe("fixed");
+    expect(normalizeStages([st({ start: "2026-12-11", end: "2026-12-20", evidence: "서류전형 발표: 12월 중순 예정" })])[0].kind).toBe("range");
+  });
+});

@@ -30,14 +30,28 @@ export function model(kind: "extract" | "reason"): string {
  * 스키마에 맞는 JSON을 받는다.
  * 1차: json_schema(strict) 구조화 출력. 공급자가 거부하면 2차: JSON 모드 + 스키마를 프롬프트로 전달 후 zod로 검증.
  */
-export async function structured<S extends z.ZodType>(opts: { kind: "extract" | "reason"; system: string; user: string; schema: S; name: string }): Promise<z.infer<S>> {
+type Opts<S> = { kind: "extract" | "reason"; system: string; user: string; schema: S; name: string };
+
+export async function structured<S extends z.ZodType>(opts: Opts<S>): Promise<z.infer<S>> {
+  const primary = model(opts.kind);
+  const fallback = model("extract");
+  if (opts.kind === "extract" || primary === fallback) return call(primary, opts);
+  // 문장 생성(REASON)은 상위 모델이 혼잡(503)·한도(429)·지연이면 짧게 포기하고 경량 모델로 대체 — 화면이 오래 멈추지 않게
+  try {
+    return await call(primary, opts, { timeout: 12_000, maxRetries: 0 });
+  } catch {
+    return call(fallback, opts);
+  }
+}
+
+async function call<S extends z.ZodType>(modelName: string, opts: Opts<S>, req?: { timeout: number; maxRetries: number }): Promise<z.infer<S>> {
   const c = getClient();
   const messages = [
     { role: "system" as const, content: opts.system },
     { role: "user" as const, content: opts.user },
   ];
   try {
-    const res = await c.chat.completions.parse({ model: model(opts.kind), messages, response_format: zodResponseFormat(opts.schema, opts.name) });
+    const res = await c.chat.completions.parse({ model: modelName, messages, response_format: zodResponseFormat(opts.schema, opts.name) }, req);
     const parsed = res.choices[0]?.message.parsed;
     if (parsed) return parsed as z.infer<S>;
   } catch (e) {
@@ -45,11 +59,14 @@ export async function structured<S extends z.ZodType>(opts: { kind: "extract" | 
     if (status !== 400 && status !== 422) throw e; // 키·한도 오류는 그대로 전달
   }
   const schemaJson = JSON.stringify((zodResponseFormat(opts.schema, opts.name) as { json_schema: { schema: unknown } }).json_schema.schema);
-  const res = await c.chat.completions.create({
-    model: model(opts.kind),
-    messages: [{ role: "system", content: `${opts.system}\n\n반드시 아래 JSON Schema를 따르는 JSON 객체 하나만 출력한다.\n${schemaJson}` }, messages[1]],
-    response_format: { type: "json_object" },
-  });
+  const res = await c.chat.completions.create(
+    {
+      model: modelName,
+      messages: [{ role: "system", content: `${opts.system}\n\n반드시 아래 JSON Schema를 따르는 JSON 객체 하나만 출력한다.\n${schemaJson}` }, messages[1]],
+      response_format: { type: "json_object" },
+    },
+    req,
+  );
   const text = res.choices[0]?.message.content ?? "";
   const json = JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, ""));
   return opts.schema.parse(json);
