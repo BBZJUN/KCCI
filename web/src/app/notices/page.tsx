@@ -41,7 +41,7 @@ function Chip({ it }: { it: CalendarItem }) {
       {!solid && `${CONFIDENCE_LABEL[it.confidence]} `}
       {it.label} {Number(it.start.slice(5, 7))}/{Number(it.start.slice(8))}
       {it.end !== it.start && `~${Number(it.end.slice(8))}`}
-      {it.time && ` ${it.time}`}
+      {it.time ? ` ${it.time}` : !solid ? " · 시간 미정" : ""}
     </span>
   );
 }
@@ -87,7 +87,7 @@ function StepRow({ s, pending }: { s: Pick<Step, "tool" | "label"> & Partial<Ste
         <p className="text-sm">
           <b>{s.label}</b> <code className="ml-1 text-[11px] text-muted">{s.tool}()</code>
           {s.by && <span className={`ml-2 rounded px-1.5 py-px text-[10px] font-bold ${s.by === "AI" ? "bg-accent/15 text-accent" : s.by === "예비" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"}`}>{s.by}</span>}
-          {!!s.ms && <span className="ml-1 text-[11px] text-muted">{(s.ms / 1000).toFixed(1)}초</span>}
+          {!!s.ms && <span className="ml-1 text-[11px] text-muted">{s.ms < 100 ? "즉시" : `${(s.ms / 1000).toFixed(1)}초`}</span>}
         </p>
         {s.summary && <p className="truncate text-xs text-muted">{s.summary}</p>}
       </div>
