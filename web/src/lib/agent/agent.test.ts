@@ -151,3 +151,27 @@ describe("AI 예비 경로 (키 없음·한도·혼잡)", () => {
     expect(timeIn("오전 9시 30분")).toBe("09:30");
   });
 });
+
+import { readFileSync as readFileSync2 } from "node:fs";
+import { join as join2 } from "node:path";
+import { runNoticeAgent } from "./noticeAgent";
+import { DEMO_ITEMS as SEEDED, SAMPLE_NOTICES as NOTICES } from "../demo";
+
+describe("안내 반영 에이전트 (AI 없이 예비 경로)", () => {
+  it("토스 합격 메일 → 12/18 면접 확정 → 친구 술약속과 새 충돌 → 약속 조정 문구", async () => {
+    const r = await runNoticeAgent({ text: NOTICES[0].text, items: SEEDED, today: "2026-12-07", useAI: false });
+    expect(r.trace.map((s) => s.tool)).toEqual(["read_notice", "plan_changes", "detect_conflict", "suggest_adjustment", "await_approval"]);
+    expect(r.plan.changes[0]).toMatchObject({ type: "confirm", after: { start: "2026-12-18", time: "14:00", confidence: "high" } });
+    expect(r.conflicts).toHaveLength(1);
+    expect(r.conflicts[0].conflict.severity).toBe("hard");
+    const target = r.conflicts[0].advice.target_id;
+    expect(SEEDED.find((i) => i.id === target)?.label).toContain("술약속");
+  });
+  it("시연용 캡처는 AI 없이도 미리 옮긴 글로 판독한다", async () => {
+    const png = readFileSync2(join2(__dirname, "../../../public/samples/notice-sms.png"));
+    const r = await runNoticeAgent({ image: "data:image/png;base64," + png.toString("base64"), items: SEEDED, today: "2026-12-07", useAI: false });
+    expect(r.trace[0]).toMatchObject({ tool: "transcribe_capture", by: "예비" });
+    expect(r.transcript).not.toContain("홍길동");
+    expect(r.reading.next_stage).toMatchObject({ date: "2026-12-22", time: "10:00" });
+  });
+});

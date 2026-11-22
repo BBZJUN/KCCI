@@ -68,3 +68,14 @@ export function planNoticeChanges(items: CalendarItem[], reading: NoticeReading,
   if (target) return { groupId, company, changes: [{ type: "confirm", itemId: target.id, before: target, after }], note: "예상 일정을 확정 일정으로 바꿀까요?" };
   return { groupId, company, changes: [{ type: "add", after }], note: "캘린더에 없던 전형이에요. 새 일정으로 추가할까요?" };
 }
+
+/** 변경 제안을 일정 목록에 적용한 결과 (저장은 하지 않음 — 승인 전 미리보기·충돌 확인용) */
+export function applyChangesTo(items: CalendarItem[], changes: NoticeChange[]): CalendarItem[] {
+  let out = items;
+  for (const c of changes) {
+    if (c.type === "confirm") out = out.map((i) => (i.id === c.itemId ? c.after : i));
+    else if (c.type === "add") out = [...out.filter((i) => i.id !== c.after.id), c.after];
+    else out = out.map((i) => (i.id === c.itemId ? { ...i, status: "cancelled" as const } : i));
+  }
+  return out;
+}

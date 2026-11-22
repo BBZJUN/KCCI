@@ -5,6 +5,18 @@ import MonthCalendar from "@/components/MonthCalendar";
 import AddEventForm from "@/components/AddEventForm";
 import { addItems, clearAll, removeItem, resetDemo, updateItem, useCalendar, useClientToday } from "@/lib/store";
 import { DEMO_USER } from "@/lib/demo";
+import { toICS } from "@/lib/ics";
+import type { CalendarItem } from "@/lib/calendar";
+
+/** Google 캘린더·iPhone·Outlook에서 가져올 수 있는 .ics 파일로 내려받기 */
+function downloadICS(items: CalendarItem[]) {
+  const url = URL.createObjectURL(new Blob([toICS(items)], { type: "text/calendar;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "jobdori-calendar.ics";
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function CalendarPage() {
   const { items, today } = useCalendar();
@@ -19,11 +31,16 @@ export default function CalendarPage() {
           <p className="text-sm font-semibold text-accent">잡도리</p>
           <h1 className="text-3xl font-bold">{DEMO_USER}님의 취준 캘린더</h1>
         </div>
-        <nav className="ml-auto flex gap-2 text-sm">
+        <nav className="ml-auto flex flex-wrap gap-2 text-sm">
           <Link href="/" className="rounded-lg bg-navy px-3 py-2 font-semibold text-white">+ 공고 담기</Link>
           <Link href="/recommend" className="rounded-lg border border-slate-300 px-3 py-2 font-semibold">추천 공고</Link>
           <Link href="/notices" className="rounded-lg bg-accent px-3 py-2 font-semibold text-white">안내 반영</Link>
           <button onClick={resetDemo} className="rounded-lg border border-slate-300 px-3 py-2 font-semibold">시연 처음 상태로</button>
+          {items.length > 0 && (
+            <button onClick={() => downloadICS(items)} title="Google 캘린더·iPhone·Outlook에서 가져오기" className="rounded-lg border border-slate-300 px-3 py-2 font-semibold">
+              캘린더로 내보내기
+            </button>
+          )}
           {items.length > 0 && <button onClick={clearAll} className="rounded-lg px-3 py-2 text-muted">비우기</button>}
         </nav>
       </div>

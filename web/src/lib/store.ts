@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import type { CalendarItem } from "./calendar";
-import type { NoticeChange } from "./notice";
+import { applyChangesTo, type NoticeChange } from "./notice";
 import type { PostingExtraction } from "./schemas";
 import { DEFAULT_PROFILE, type Profile } from "./recommend";
 import { DEMO_ITEMS, DEMO_TODAY } from "./demo";
@@ -92,13 +92,7 @@ export function removeItem(id: string) {
 /** 사용자가 승인한 안내 반영 제안을 한 번에 적용 */
 export function applyNoticeChanges(changes: NoticeChange[]) {
   const cur = read();
-  let items = cur.items;
-  for (const c of changes) {
-    if (c.type === "confirm") items = items.map((i) => (i.id === c.itemId ? c.after : i));
-    else if (c.type === "add") items = [...items.filter((i) => i.id !== c.after.id), c.after];
-    else items = items.map((i) => (i.id === c.itemId ? { ...i, status: "cancelled" } : i));
-  }
-  write({ ...cur, items });
+  write({ ...cur, items: applyChangesTo(cur.items, changes) });
 }
 
 export function resetDemo() {

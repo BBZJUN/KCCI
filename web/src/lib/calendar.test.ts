@@ -89,3 +89,22 @@ describe("긴 추정 구간 칩", () => {
     expect(days("f")).toEqual(["2026-12-07", "2026-12-08"]);
   });
 });
+
+import { toICS } from "./ics";
+
+describe("캘린더 파일 내보내기", () => {
+  it("종일·시각 일정, 추정 표시, 취소 제외", () => {
+    const base = { groupId: "g", company: "가상", color: "#000", category: "application" as const, evidence: "면접: 12월 18일, 오후 2시", status: "confirmed" as const };
+    const ics = toICS([
+      { ...base, id: "a", label: "토스 1차면접", start: "2026-12-18", end: "2026-12-18", time: "14:00", confidence: "high" },
+      { ...base, id: "b", label: "신한 서류발표", start: "2026-12-11", end: "2026-12-20", confidence: "mid", status: "planned" },
+      { ...base, id: "c", label: "취소된 일정", start: "2026-12-01", end: "2026-12-01", confidence: "high", status: "cancelled" },
+    ]);
+    expect(ics).toContain("DTSTART;TZID=Asia/Seoul:20261218T140000");
+    expect(ics).toContain("DTSTART;VALUE=DATE:20261211\r\nDTEND;VALUE=DATE:20261221");
+    expect(ics).toContain("SUMMARY:[범위] 신한 서류발표");
+    expect(ics).toContain("근거: 면접: 12월 18일\\, 오후 2시");
+    expect(ics).not.toContain("취소된 일정");
+    expect(ics.split("\r\n").every((l) => new TextEncoder().encode(l).length <= 75)).toBe(true);
+  });
+});
