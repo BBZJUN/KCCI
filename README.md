@@ -5,9 +5,9 @@
 공고를 수락하면 **AI 에이전트**가 서류 마감부터 최종 발표까지 전형 일정을 캘린더에 만들어 줍니다.
 결과 안내 메일이나 문자 캡처를 넘기면 다음 전형을 확정하고, 면접·자격증 시험·알바·약속이 겹치기 전에 알려 줍니다.
 
-| 바로 해보기 | 소개서 | AI 활용내역 | 시연 영상 |
-|---|---|---|---|
-| **[kcci-beta.vercel.app](https://kcci-beta.vercel.app)** (로그인 없음) | [`docs/proposal.pdf`](docs/proposal.pdf) | [`docs/ai-usage.txt`](docs/ai-usage.txt) | _업로드 후 링크_ |
+| 바로 해보기 | 소개서 | AI 활용내역 | 개발 설명 | 시연 영상 |
+|---|---|---|---|---|
+| **[kcci-beta.vercel.app](https://kcci-beta.vercel.app)** (로그인 없음) | [`docs/proposal.pdf`](docs/proposal.pdf) | [`docs/ai-usage.txt`](docs/ai-usage.txt) | [아래 개발 설명](#개발-설명) | _업로드 후 링크_ |
 
 ![내 캘린더](docs/images/calendar.jpg)
 
@@ -102,6 +102,123 @@ flowchart LR
 | 테스트·배포 | Vitest, Playwright (E2E·영상), Vercel |
 
 
+---
+
+## 개발 설명
+
+### 전체 구조
+
+```mermaid
+flowchart LR
+  subgraph Client["브라우저"]
+    UI["Next.js 화면<br/>공고 담기 · 캘린더 · 안내 반영 · 추천"]
+    LS[("브라우저 저장소<br/>일정·프로필")]
+    UI <--> LS
+  end
+  EXT["크롬 확장<br/>열린 공고 페이지 읽기"] -->|"공고 원문 전달"| UI
+  UI -->|fetch| API
+  subgraph Server["Vercel · Route Handlers"]
+    API["Agent API<br/>/api/postings/parse<br/>/api/agent/notice<br/>/api/conflicts/suggest<br/>/api/recommend/explain"]
+    TOOLS["도구 (코드)<br/>estimateSchedule · normalizeStages<br/>planNoticeChanges · detectConflict<br/>pickTarget · rankJobs"]
+    LLM["structured()<br/>Zod 검증 · 15초 제한 · 재시도"]
+    FB["예비 경로<br/>시연 결과 · 규칙 추출"]
+    CACHE[("공유 캐시<br/>메모리 / Supabase")]
+    API --> TOOLS
+    API --> LLM
+    API --> FB
+    API <--> CACHE
+  end
+  LLM -->|"OpenAI 호환 API"| G["Google Gemini<br/>Flash-Lite · Flash"]
+```
+
+- 화면과 API를 Next.js 앱 하나에 두고 Vercel에 배포합니다. 로그인 없이 바로 써 볼 수 있도록 MVP는 일정을 브라우저 저장소에 둡니다.
+- AI 호출은 `src/lib/agent/llm.ts`의 `structured()` 한 곳으로만 합니다. 공급자와 모델은 환경변수(`LLM_BASE_URL`, `LLM_MODEL_*`)로 바꿉니다.
+- AI가 답하지 못하면(키 없음, 한도, 15초 초과) 같은 API가 예비 경로로 응답하고, 응답에 `mode`(ai · cache · demo · rule)를 붙여 화면에 출처를 표시합니다.
+
+### 요청 흐름
+
+**공고 → 전형 일정** (`POST /api/postings/parse`)
+1. 원문을 정규화한 뒤 sha256을 구해 공유 캐시를 찾습니다. 있으면 AI를 다시 부르지 않습니다.
+2. `parsePosting`: Gemini가 `PostingExtraction`(회사, 공고명, 단계별 유형·날짜 종류·시작/끝·시각·근거 문장)을 구조화 출력으로 돌려줍니다.
+3. `normalizeStages`(코드): 서비스 규칙을 적용합니다. 접수 기간은 마감일 하루로, 'N월 중'은 그 달 전체로, 날짜가 둘 다 적힌 기간은 확정으로 정리합니다.
+4. `estimateSchedule`(코드): 날짜가 없는 단계를 앞 단계 날짜와 기본 간격(`DEFAULT_GAP`)으로 추정하고 신뢰도(high · mid · low)를 붙입니다. 근거가 원문에 없으면 `evidence_missing`으로 표시합니다.
+5. 사용자가 화면에서 확인하고 '캘린더에 추가'를 누를 때만 저장합니다.
+
+**안내 → 캘린더 반영** (`POST /api/agent/notice`)
+
+| 순서 | 도구 | 담당 | 출력 |
+|---|---|---|---|
+| 1 | `transcribe_capture` | AI (이미지) | 캡처 속 안내 글, 이름·연락처는 가림 → `maskPII`로 한 번 더 |
+| 2 | `read_notice` | AI | 합격·불합격·일정 안내, 다음 전형 유형·날짜·시각·방식, 근거 |
+| 3 | `plan_changes` | 코드 | 확정(점선→실선) · 추가 · 이후 일정 정리 변경안 |
+| 4 | `detect_conflict` | 코드 | 변경안을 적용해 보았을 때 새로 생기는 충돌 |
+| 5 | `suggest_adjustment` | 코드 + AI | 옮길 일정 선정(코드), 채용담당자 문의 문구(AI) 또는 약속 조정 기본 문구 |
+| 6 | `await_approval` | 사용자 | 승인하면 브라우저 저장소에 반영 |
+
+단계마다 담당·소요 시간·요약을 `trace`로 돌려주고, 화면의 '에이전트 실행 기록'에 그대로 보여 줍니다.
+
+### 코드 구조
+
+| 위치 | 역할 |
+|---|---|
+| `web/src/lib/agent/llm.ts` | `structured()` — 구조화 출력(`chat.completions.parse` + Zod), 미지원 공급자는 JSON 모드로 대체, 이미지 입력, 웹 요청 시간 제한, REASON 모델 혼잡 시 Flash-Lite로 대체 |
+| `parsePosting.ts` · `normalizeStages.ts` · `estimateSchedule.ts` | 공고 추출 → 규칙 정리 → 미정 일정 추정 |
+| `readNotice.ts` · `transcribeCapture.ts` · `pii.ts` · `evidence.ts` | 안내·캡처 판독, 개인정보 가림, 근거 확인 |
+| `noticeAgent.ts` | 안내 반영 에이전트 (도구 순차 호출 + 실행 기록) |
+| `detectConflict.ts` · `conflictAdvice.ts` · `suggestAdjustment.ts` | 충돌 판단(하루를 쓰는 일정만), 조정 대상 선정, 조정 문구 |
+| `fallback.ts` · `cache.ts` | AI 예비 경로(시연 결과·규칙 추출·규칙 판독), 공유 캐시 |
+| `web/src/lib/calendar.ts` · `notice.ts` · `recommend.ts` · `ics.ts` | 캘린더 모델·칩 표시, 변경안 계산, 추천 점수, `.ics` 내보내기 |
+| `web/src/lib/store.ts` | 브라우저 저장소 (`useSyncExternalStore`), 첫 방문 시 시연 데이터 |
+| `web/src/lib/remote.ts` · `supabase/migrations/` | Supabase 행 ↔ 캘린더 변환, 스키마 + RLS (로그인 연동용) |
+| `web/src/app/` | 화면: `/` 공고 담기 · `/calendar` · `/notices` 안내 반영 · `/recommend` · `/import`(확장 연결) |
+| `extension/` | 크롬 확장 MV3 — 현재 탭 텍스트 → 분석 → 웹 캘린더에서 확인 후 담기 |
+| `eval/` · `web/scripts/` | 가상 평가셋(공고 40 · 메일 20 · 충돌 10)과 측정·생성 스크립트 |
+
+### API
+
+| 메서드·경로 | 입력 | 출력 | AI |
+|---|---|---|---|
+| `POST /api/postings/parse` | 공고 원문, 기준일, 출처 URL | 추출 결과, 신뢰도 붙은 일정, `mode` | 추출 |
+| `POST /api/agent/notice` | 안내 글 또는 캡처 이미지(data URL), 현재 일정 | 실행 기록, 판독, 변경안, 새 충돌과 조정 문구 | 캡처·판독·문구 |
+| `POST /api/notices/read` | 안내 글 | 판독 결과 (단독 호출용) | 판독 |
+| `POST /api/conflicts` · `/suggest` | 일정 목록 / 충돌 1건 | 충돌 목록 / 조정 대상·이유·문구 | 문구만 |
+| `POST /api/recommend/explain` | 공고, 프로필, 규칙 근거 | 추천 이유 문장 | 문장만 |
+| `POST /api/applications` · `GET /api/calendar` | 사용자 토큰 | Supabase 저장·조회 (키 없으면 501) | — |
+
+### 데이터 모델
+
+- **CalendarItem**: `id`, `groupId`(지원 건), `label`, `company`, `category`(지원·개인·자격증), `start`/`end`, `time`, `confidence`, `evidence`, `status`(예정·확정·완료·정리)
+- **신뢰도와 선 스타일**: high = 실선·시각 표시, mid = 점선(범위), low = 점점선(규칙 추정)·"시간 미정"
+- **Supabase**: `posting_cache`(원문 해시 → 추출 결과), `applications`, `stages`(근거 문장만 저장), `personal_events`, `notice_logs`(원문 없이 결과·근거만). 모든 사용자 테이블에 본인만 읽고 쓰는 RLS 정책이 걸려 있습니다.
+
+### 설계 원칙
+- **AI는 제안, 사용자가 확정**: 일정 추가·확정·삭제는 모두 사용자 승인 뒤에 반영합니다.
+- **판단은 코드**: 충돌 여부, 조정 대상, 추천 점수, 미정 일정 추정은 코드가 정하고 테스트합니다. AI는 형식이 제각각인 글을 읽고 문장을 쓰는 일만 합니다.
+- **구조화 출력**: LLM 출력은 Zod 스키마로 받습니다. strict 모드 호환을 위해 선택 값은 `optional` 대신 `nullable`로 둡니다.
+- **근거와 개인정보**: 날짜마다 원문 근거를 저장하고, AI에 보내기 전 개인정보를 가리며, 안내 원문과 이미지는 저장하지 않습니다.
+- **비용과 장애**: 공유 캐시로 같은 공고는 한 번만 분석하고, IP당 분당 12회로 요청을 제한합니다. AI가 실패하면 예비 경로로 응답해 화면이 멈추지 않습니다.
+- **크롤링 금지**: 민간 채용 플랫폼은 긁어오지 않고, 사용자가 연 페이지만 확장으로 읽습니다.
+
+### 테스트
+
+```bash
+cd web
+npm test                   # Vitest 55개: 추정·정리 규칙, 충돌 시나리오 10건, 에이전트, 예비 경로, .ics, 캐시 해시
+npm run lint && npm run build
+npm run eval -- postings   # 정형 공고 30건 (키 필요)
+npm run eval -- hard       # 비정형 공고 10건
+npm run eval -- rule       # 같은 공고를 규칙 추출만으로 (비교 기준)
+npm run eval -- notices    # 안내 메일 20건
+```
+화면 흐름은 Playwright로 키 없음 / 잘못된 키 / 정상 키 세 가지 조건에서 처음부터 끝까지 확인했습니다.
+
+### 한계와 다음 단계
+- 로그인을 붙여 브라우저 저장소 대신 Supabase로 동기화 (서버 API와 스키마는 구현됨)
+- 잡알리오 공공기관 채용정보·Q-net 시험 일정 API 연동 (현재 시연은 가상 데이터)
+- 충돌을 날짜 단위가 아니라 시각·이동 시간 단위로 판단
+- 실제 공고와 사용자 수정 내역으로 평가셋을 늘려 정확도를 계속 측정
+
+---
 
 ## 로컬 실행
 
